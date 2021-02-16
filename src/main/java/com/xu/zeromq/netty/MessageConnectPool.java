@@ -4,11 +4,16 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.util.Properties;
 import org.apache.commons.pool.impl.GenericObjectPool;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class MessageConnectPool extends GenericObjectPool<MessageConnectFactory> {
 
-    private static MessageConnectPool pool = null;
+    public static final Logger logger = LoggerFactory.getLogger(MessageConnectPool.class);
+
+    private volatile static MessageConnectPool pool = null;
     private static Properties messageConnectConfigProperties = null;
+    // zeromq 网络连接参数
     private static String configPropertiesString = "zeromq.messageconnect.properties";
     private static String serverAddress = "";
 
@@ -24,17 +29,12 @@ public class MessageConnectPool extends GenericObjectPool<MessageConnectFactory>
     }
 
     private MessageConnectPool() {
-        try {
+        // 读取 zeromq.messageconnect.properties 文件中的参数到 properties 对象中
+        try (InputStream inputStream = MessageConnectPool.class.getClassLoader().getResourceAsStream(configPropertiesString)){
             messageConnectConfigProperties = new Properties();
-
-            InputStream inputStream = MessageConnectPool.class.getClassLoader().getResourceAsStream(configPropertiesString);
-
             messageConnectConfigProperties.load(inputStream);
-            inputStream.close();
-
-            this.serverAddress = serverAddress;
         } catch (IOException e) {
-            e.printStackTrace();
+            logger.warn(e.getMessage());
         }
 
         int maxActive = Integer.parseInt(messageConnectConfigProperties.getProperty("maxActive"));
@@ -43,16 +43,30 @@ public class MessageConnectPool extends GenericObjectPool<MessageConnectFactory>
         int maxWait = Integer.parseInt(messageConnectConfigProperties.getProperty("maxWait"));
         int sessionTimeOut = Integer.parseInt(messageConnectConfigProperties.getProperty("sessionTimeOut"));
 
-        System.out.printf("MessageConnectPool[maxActive=%d,minIdle=%d,maxIdle=%d,maxWait=%d,sessionTimeOut=%d]\n", maxActive, minIdle, maxIdle, maxWait, sessionTimeOut);
+        logger.info("MessageConnectPool[maxActive=" + maxActive + ",minIdle=" + minIdle + ",maxIdle=" + maxIdle +
+                                ",maxWait=" + maxWait + ",sessionTimeOut=" + sessionTimeOut + "]");
 
+        /*
+         * 我们也可以设计一个对象个数动态变化的池子：池子有一个最大值 maxActive 和最小值 minIdle，最大值是对象个数的上限，
+         * 当池子一段时间没有使用后，就去回收超过最小值个数的对象，这样在系统繁忙时，就可以充分复用对象，在系统空闲时，又可以释放不必要的对象
+         */
+
+        // 池子可以最多容纳多少个对象
         this.setMaxActive(maxActive);
         this.setMaxIdle(maxIdle);
+        // 最小的空闲对象个数，无论对象如何被释放，保证池子里面最少的对象个数
         this.setMinIdle(minIdle);
+        // 在 borrow 对象时，阻塞等待的最长时间
         this.setMaxWait(maxWait);
+        // testOnBorrow 表示在从池子借取对象时，是否进行校验
         this.setTestOnBorrow(false);
+        // testOnReturn 表示在向池子归还对象时，是否进行校验
         this.setTestOnReturn(false);
+        // 驱赶线程扫描池子空闲对象的时间间隔
         this.setTimeBetweenEvictionRunsMillis(10 * 1000);
+        // 驱赶线程每一次最多扫描多少个空闲对象
         this.setNumTestsPerEvictionRun(maxActive + maxIdle);
+        // 池中的对象在被清理之前可以维持空闲的最小时间
         this.setMinEvictableIdleTimeMillis(30 * 60 * 1000);
         this.setTestWhileIdle(true);
 
@@ -62,10 +76,10 @@ public class MessageConnectPool extends GenericObjectPool<MessageConnectFactory>
     public MessageConnectFactory borrow() {
         assert pool != null;
         try {
-            return (MessageConnectFactory) pool.borrowObject();
+            // 从对象池中获取 MessageConnectFactory 对象
+            return pool.borrowObject();
         } catch (Exception e) {
-            System.out.printf("get message connection throw the error from message connection pool, error message is %s\n",
-                    e.getMessage());
+            logger.warn("error occurs when trying to borrow connection, error is " + e.getMessage());
         }
         return null;
     }
@@ -75,8 +89,7 @@ public class MessageConnectPool extends GenericObjectPool<MessageConnectFactory>
         try {
             pool.close();
         } catch (Exception e) {
-            System.out.printf("throw the error from close message connection pool, error message is %s\n",
-                    e.getMessage());
+            logger.warn("error occurs when trying to close connection pool, error is " + e.getMessage());
         }
     }
 

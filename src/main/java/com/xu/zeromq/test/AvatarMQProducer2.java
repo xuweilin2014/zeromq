@@ -19,7 +19,7 @@ public class AvatarMQProducer2 {
             Message message = new Message();
             String str = "Hello AvatarMQ From Producer2[" + i + "]";
             message.setBody(str.getBytes());
-            ProducerAckMessage result = producer.delivery(message);
+            ProducerAckMessage result = producer.deliver(message);
             if (result.getStatus() == (ProducerAckMessage.SUCCESS)) {
                 System.out.printf("AvatarMQProducer2 发送消息编号:%s\n", result.getMsgId());
             }

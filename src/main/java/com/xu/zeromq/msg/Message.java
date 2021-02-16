@@ -1,18 +1,3 @@
-/**
- * Copyright (C) 2016 Newland Group Holding Limited
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
 package com.xu.zeromq.msg;
 
 import java.io.Serializable;
@@ -21,18 +6,14 @@ import org.apache.commons.lang3.builder.HashCodeBuilder;
 import org.apache.commons.lang3.builder.ReflectionToStringBuilder;
 import org.apache.commons.lang3.builder.ToStringStyle;
 
-/**
- * @filename:Message.java
- * @description:Message功能模块
- * @author tangjie<https://github.com/tang-jie>
- * @blog http://www.cnblogs.com/jietang/
- * @since 2016-8-11
- */
 public class Message extends BaseMessage implements Serializable {
-
+    // 消息 id
     private String msgId;
+    // 消息的主题
     private String topic;
+    // 消息体
     private byte[] body;
+    // 时间戳
     private long timeStamp;
 
     public String getMsgId() {
@@ -69,7 +50,7 @@ public class Message extends BaseMessage implements Serializable {
 
     public String toString() {
         ReflectionToStringBuilder.setDefaultStyle(ToStringStyle.SHORT_PREFIX_STYLE);
-        return ReflectionToStringBuilder.toStringExclude(this, new String[]{"body"});
+        return ReflectionToStringBuilder.toStringExclude(this, "body");
     }
 
     public int hashCode() {

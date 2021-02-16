@@ -9,9 +9,13 @@ import java.util.concurrent.TimeUnit;
 public class CallBackInvoker<T> {
 
     private final CountDownLatch countDownLatch = new CountDownLatch(1);
+
     private T messageResult;
+
     private List<CallBackListener<T>> listeners = Collections.synchronizedList(new ArrayList<CallBackListener<T>>());
+
     private String requestId;
+
     private Throwable reason;
 
     public void setReason(Throwable reason) {
@@ -55,7 +59,7 @@ public class CallBackInvoker<T> {
 
     private void publish() {
         for (CallBackListener<T> listener : listeners) {
-            listener.onCallBack(messageResult);
+            listener.onCallBack(messageResult, reason);
         }
     }
 }

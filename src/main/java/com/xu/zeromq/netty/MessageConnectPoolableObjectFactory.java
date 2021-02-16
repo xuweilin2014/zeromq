@@ -1,29 +1,8 @@
-/**
- * Copyright (C) 2016 Newland Group Holding Limited
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
 package com.xu.zeromq.netty;
 
 import org.apache.commons.pool.PoolableObjectFactory;
 
-/**
- * @filename:MessageConnectPoolableObjectFactory.java
- * @description:MessageConnectPoolableObjectFactory功能模块
- * @author tangjie<https://github.com/tang-jie>
- * @blog http://www.cnblogs.com/jietang/
- * @since 2016-8-11
- */
+// PooledObjectFactory 抽象了对象在池子生命周期中每个节点的方法
 public class MessageConnectPoolableObjectFactory implements PoolableObjectFactory<MessageConnectFactory> {
 
     private String serverAddress;
@@ -38,25 +17,28 @@ public class MessageConnectPoolableObjectFactory implements PoolableObjectFactor
         this.sessionTimeOut = sessionTimeOut;
     }
 
+    // makeObject 定义了如何生成对象
     public MessageConnectFactory makeObject() throws Exception {
-        MessageConnectFactory factory = new MessageConnectFactory(serverAddress);
-        return factory;
+        return new MessageConnectFactory(serverAddress);
     }
 
+    // destroyObject 定义了如何摧毁对象，比如释放资源
     public void destroyObject(MessageConnectFactory obj) throws Exception {
-        if (obj instanceof MessageConnectFactory) {
-            ((MessageConnectFactory) obj).close();
+        if (obj != null) {
+            obj.close();
         }
     }
 
+    // validateObject 定义了如何校验对象
     public boolean validateObject(MessageConnectFactory obj) {
         return true;
     }
 
+    // activateObject 定义了如何初始化对象
     public void activateObject(MessageConnectFactory obj) throws Exception {
-
     }
 
+    // passivateObject 定义了如何重置对象
     public void passivateObject(MessageConnectFactory obj) throws Exception {
         MessageConnectFactory factory = (MessageConnectFactory) obj;
     }
