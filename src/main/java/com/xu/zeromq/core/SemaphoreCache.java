@@ -25,13 +25,6 @@ import java.util.concurrent.TimeUnit;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
-/**
- * @filename:SemaphoreCache.java
- * @description:SemaphoreCache功能模块
- * @author tangjie<https://github.com/tang-jie>
- * @blog http://www.cnblogs.com/jietang/
- * @since 2016-8-11
- */
 public class SemaphoreCache {
 
     private final static int hookTime = MessageSystemConfig.SemaphoreCacheHookTimeValue;

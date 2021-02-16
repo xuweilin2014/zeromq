@@ -1,23 +1,9 @@
-/**
- * Copyright (C) 2016 Newland Group Holding Limited
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
 package com.xu.zeromq.broker;
 
 import io.netty.channel.Channel;
 import java.util.ArrayList;
 import java.util.List;
+
 import com.xu.zeromq.msg.Message;
 import com.xu.zeromq.msg.ProducerAckMessage;
 import com.xu.zeromq.core.SemaphoreCache;
@@ -35,20 +21,19 @@ import org.apache.commons.collections.ClosureUtils;
 import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.collections.functors.AnyPredicate;
 import com.google.common.base.Joiner;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
-/**
- * @filename:ProducerMessageHook.java
- * @description:ProducerMessageHook功能模块
- * @author tangjie<https://github.com/tang-jie>
- * @blog http://www.cnblogs.com/jietang/
- * @since 2016-8-11
- */
 public class ProducerMessageHook implements ProducerMessageListener {
 
+    public static final Logger logger = LoggerFactory.getLogger(ProducerMessageHook.class);
+
     private List<ConsumerClusters> clustersSet = new ArrayList<ConsumerClusters>();
+
     private List<ConsumerClusters> focusTopicGroup = null;
 
     private void filterByTopic(final String topic) {
+        // 谓词，用来判断某一个消费者集群是否关注了对应的 topic
         Predicate focusAllPredicate = new Predicate() {
             public boolean evaluate(Object object) {
                 ConsumerClusters clusters = (ConsumerClusters) object;
@@ -56,9 +41,11 @@ public class ProducerMessageHook implements ProducerMessageListener {
             }
         };
 
+        // AnyPredicate 实现了 Predicate 接口，在调用其 evaluate 方法时，会遍历 iPredicates 数组中的
+        // 每一个 iPredicate 类对象，分别调用其 evaluate 方法，只要有一个返回 true，那么最后就会直接返回 true
         AnyPredicate any = new AnyPredicate(new Predicate[]{focusAllPredicate});
 
-        Closure joinClosure = new Closure() {
+        Closure trueClosure = new Closure() {
             public void execute(Object input) {
                 if (input instanceof ConsumerClusters) {
                     ConsumerClusters clusters = (ConsumerClusters) input;
@@ -67,19 +54,21 @@ public class ProducerMessageHook implements ProducerMessageListener {
             }
         };
 
-        Closure ignoreClosure = new Closure() {
+        Closure falseClosure = new Closure() {
             public void execute(Object input) {
             }
         };
 
-        Closure ifClosure = ClosureUtils.ifClosure(any, joinClosure, ignoreClosure);
-
+        Closure ifClosure = ClosureUtils.ifClosure(any, trueClosure, falseClosure);
+        // 遍历 focusTopicGroup 中的每一个消费者集群，如果这个消费者集群关注了 topic 主题的话，就将其添加到 clustersSet 中
         CollectionUtils.forAllDo(focusTopicGroup, ifClosure);
     }
 
     private boolean checkClustersSet(Message msg, String requestId) {
+        // 如果 clustersSet 的 size 为 0，那么说明没有消费者订阅对应的主题 topic，并且创建一个 ack 对象，
+        // 并且将其保存到 AckTaskQueue 中，最后返回 false
         if (clustersSet.size() == 0) {
-            System.out.println("AvatarMQ don't have match clusters!");
+            logger.info("ZeroMQ does not have matched clusters!");
             ProducerAckMessage ack = new ProducerAckMessage();
             ack.setMsgId(msg.getMsgId());
             ack.setAck(requestId);
@@ -94,14 +83,14 @@ public class ProducerMessageHook implements ProducerMessageListener {
 
     private void dispatchTask(Message msg, String topic) {
         List<MessageDispatchTask> tasks = new ArrayList<MessageDispatchTask>();
-
+        // 遍历 clustersSet 中每一个订阅了主题 topic 的消费者集群，并且创建 MessageDispatchTask，
+        // 并且将其保存到 MessageTaskQueue 中
         for (int i = 0; i < clustersSet.size(); i++) {
             MessageDispatchTask task = new MessageDispatchTask();
             task.setClusters(clustersSet.get(i).getClustersId());
             task.setTopic(topic);
             task.setMessage(msg);
             tasks.add(task);
-
         }
 
         MessageTaskQueue.getInstance().pushTask(tasks);
@@ -114,7 +103,9 @@ public class ProducerMessageHook implements ProducerMessageListener {
     private void taskAck(Message msg, String requestId) {
         try {
             Joiner joiner = Joiner.on(MessageSystemConfig.MessageDelimiter).skipNulls();
+            // key = requestId + @ + msgId
             String key = joiner.join(requestId, msg.getMsgId());
+            // 将 key 保存到缓存队列中
             AckMessageCache.getAckMessageCache().appendMessage(key);
         } catch (Exception e) {
             e.printStackTrace();
@@ -126,17 +117,15 @@ public class ProducerMessageHook implements ProducerMessageListener {
         ChannelCache.pushRequest(requestId, channel);
 
         String topic = msg.getTopic();
-
+        // 获取到关注这个主题 topic 的消费者集群
         focusTopicGroup = ConsumerContext.selectByTopic(topic);
-
+        // 再进行一次过滤，筛选出关注了主题 topic 的消费者集群
         filterByTopic(topic);
 
         if (checkClustersSet(msg, requestId)) {
             dispatchTask(msg, topic);
             taskAck(msg, requestId);
             clustersSet.clear();
-        } else {
-            return;
         }
     }
 }

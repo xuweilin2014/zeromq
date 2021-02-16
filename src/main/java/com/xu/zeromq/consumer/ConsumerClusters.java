@@ -1,18 +1,3 @@
-/**
- * Copyright (C) 2016 Newland Group Holding Limited
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
 package com.xu.zeromq.consumer;
 
 import com.xu.zeromq.model.RemoteChannelData;
@@ -27,22 +12,19 @@ import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.collections.MapUtils;
 import org.apache.commons.collections.Predicate;
 
-/**
- * @filename:ConsumerClusters.java
- * @description:ConsumerClusters功能模块
- * @author tangjie<https://github.com/tang-jie>
- * @blog http://www.cnblogs.com/jietang/
- * @since 2016-8-11
- */
 public class ConsumerClusters {
 
+    // 轮询调度（Round-Robin Scheduling）位置标记
     private int next = 0;
-    private final String clustersId;
-    private final ConcurrentHashMap<String, SubscriptionData> subMap
-            = new ConcurrentHashMap<String, SubscriptionData>();
 
-    private final ConcurrentHashMap<String, RemoteChannelData> channelMap
-            = new ConcurrentHashMap<String, RemoteChannelData>();
+    private final String clustersId;
+
+    // SubscriptionData 只有一个属性 topic，表明消息的主题
+    // 生产者消息主题 -> 消息对应的 topic 信息数据结构
+    private final ConcurrentHashMap<String, SubscriptionData> subMap = new ConcurrentHashMap<String, SubscriptionData>();
+
+    // 消费者标识编码 clientId -> 对应的消费者的 netty 网络通信管道信息
+    private final ConcurrentHashMap<String, RemoteChannelData> channelMap = new ConcurrentHashMap<String, RemoteChannelData>();
 
     private final List<RemoteChannelData> channelList = Collections.synchronizedList(new ArrayList<RemoteChannelData>());
 
@@ -62,16 +44,21 @@ public class ConsumerClusters {
         return channelMap;
     }
 
+    // 添加一个消费者到消费者集群中
     public void attachRemoteChannelData(String clientId, RemoteChannelData channelinfo) {
+        // 判断在 channelMap 中是否存在此 clientId 对应的连接信息
         if (findRemoteChannelData(channelinfo.getClientId()) == null) {
+            // 将 clientId -> channel 连接信息保存到 channelMap 中
             channelMap.put(clientId, channelinfo);
-            subMap.put(channelinfo.getSubcript().getTopic(), channelinfo.getSubcript());
+            // 将 topic 信息 -> subscription 保存到 subMap 中
+            subMap.put(channelinfo.getSubscript().getTopic(), channelinfo.getSubscript());
             channelList.add(channelinfo);
         } else {
             System.out.println("consumer clusters exists! it's clientId:" + clientId);
         }
     }
 
+    // 从消费者集群中删除一个消费者
     public void detachRemoteChannelData(final String clientId) {
         channelMap.remove(clientId);
 
@@ -82,18 +69,21 @@ public class ConsumerClusters {
             }
         };
 
+        // 从 channelList 中找到 clientId 等于传入参数 clientId 的 RemoteChannelData 对象，并且从 channelList 中删除掉
         RemoteChannelData data = (RemoteChannelData) CollectionUtils.find(channelList, predicate);
         if (data != null) {
             channelList.remove(data);
         }
     }
 
+    // 根据消费者标识编码，在消费者集群中查找定位一个消费者，如果不存在返回 null
     public RemoteChannelData findRemoteChannelData(String clientId) {
         return (RemoteChannelData) MapUtils.getObject(channelMap, clientId);
     }
 
+    // 负载均衡，根据连接到 broker 的顺序，依次投递消息给消费者。这里的均衡算法直接采用
+    // 轮询调度（Round-Robin Scheduling）
     public RemoteChannelData nextRemoteChannelData() {
-
         Predicate predicate = new Predicate() {
             public boolean evaluate(Object object) {
                 RemoteChannelData data = (RemoteChannelData) object;
@@ -102,7 +92,9 @@ public class ConsumerClusters {
             }
         };
 
+        // 过滤掉 channelList 中没有开启，不处于 active 状态，以及不可写入的 channel
         CollectionUtils.filter(channelList, predicate);
+        // 通过轮询算法进行负载均衡，选择 channel
         return channelList.get(next++ % channelList.size());
     }
 

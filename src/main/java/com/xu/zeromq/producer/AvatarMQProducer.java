@@ -86,7 +86,7 @@ public class AvatarMQProducer extends MessageProcessor implements AvatarMQAction
         request.setMsgSource(MessageSource.AvatarMQProducer);
         message.setMsgId(request.getMsgId());
 
-        ResponseMessage response = (ResponseMessage) sendAsynMessage(request);
+        ResponseMessage response = (ResponseMessage) sendAsyncMessage(request);
         if (response == null) {
             ProducerAckMessage ack = new ProducerAckMessage();
             ack.setStatus(ProducerAckMessage.FAIL);

@@ -33,7 +33,7 @@ public class MessageProcessor {
         return factory;
     }
 
-    public void sendAsynMessage(RequestMessage request, final NotifyCallback listener) {
+    public void sendAsyncMessage(RequestMessage request, final NotifyCallback listener) {
         Channel channel = factory.getMessageChannel();
         if (channel == null) {
             return;
@@ -65,7 +65,7 @@ public class MessageProcessor {
 
     }
 
-    public Object sendAsynMessage(RequestMessage request) {
+    public Object sendAsyncMessage(RequestMessage request) {
         Channel channel = factory.getMessageChannel();
 
         if (channel == null) {

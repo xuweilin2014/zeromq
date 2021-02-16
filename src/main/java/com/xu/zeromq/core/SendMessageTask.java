@@ -1,18 +1,3 @@
-/**
- * Copyright (C) 2016 Newland Group Holding Limited
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
 package com.xu.zeromq.core;
 
 import com.xu.zeromq.msg.ConsumerAckMessage;
@@ -30,17 +15,10 @@ import com.xu.zeromq.netty.NettyUtil;
 import java.util.concurrent.Callable;
 import java.util.concurrent.Phaser;
 
-/**
- * @filename:SendMessageTask.java
- * @description:SendMessageTask功能模块
- * @author tangjie<https://github.com/tang-jie>
- * @blog http://www.cnblogs.com/jietang/
- * @since 2016-8-11
- */
 public class SendMessageTask implements Callable<Void> {
 
     private MessageDispatchTask[] tasks;
-    private Phaser phaser = null;
+    private Phaser phaser;
     private SendMessageLauncher launcher = SendMessageLauncher.getInstance();
 
     public SendMessageTask(Phaser phaser, MessageDispatchTask[] tasks) {
@@ -48,11 +26,14 @@ public class SendMessageTask implements Callable<Void> {
         this.tasks = tasks;
     }
 
-    public Void call() throws Exception {
+    public Void call() {
+        // 遍历 MessageDispatchTask
+        // MessageDispatchTask 可以看成是 <消费者集群 cluster_id, topic, message> 三个属性的封装
         for (MessageDispatchTask task : tasks) {
             Message msg = task.getMessage();
 
             if (ConsumerContext.selectByClusters(task.getClusters()) != null) {
+                // 根据 cluster_id 获取到对应的消费者集群，并且根据负载均衡策略，选择一个集群中的一个消费者
                 RemoteChannelData channel = ConsumerContext.selectByClusters(task.getClusters()).nextRemoteChannelData();
 
                 ResponseMessage response = new ResponseMessage();
@@ -63,19 +44,18 @@ public class SendMessageTask implements Callable<Void> {
 
                 try {
                     if (!NettyUtil.validateChannel(channel.getChannel())) {
-                        ConsumerContext.setClustersStat(task.getClusters(), ClustersState.NETWORKERR);
+                        ConsumerContext.addClustersStat(task.getClusters(), ClustersState.NETWORKERR);
                         continue;
                     }
 
                     RequestMessage request = (RequestMessage) launcher.launcher(channel.getChannel(), response);
-
                     ConsumerAckMessage result = (ConsumerAckMessage) request.getMsgParams();
 
                     if (result.getStatus() == ConsumerAckMessage.SUCCESS) {
-                        ConsumerContext.setClustersStat(task.getClusters(), ClustersState.SUCCESS);
+                        ConsumerContext.addClustersStat(task.getClusters(), ClustersState.SUCCESS);
                     }
                 } catch (Exception e) {
-                    ConsumerContext.setClustersStat(task.getClusters(), ClustersState.ERROR);
+                    ConsumerContext.addClustersStat(task.getClusters(), ClustersState.ERROR);
                 }
             }
         }

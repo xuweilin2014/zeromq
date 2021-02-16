@@ -1,18 +1,3 @@
-/**
- * Copyright (C) 2016 Newland Group Holding Limited
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
 package com.xu.zeromq.broker.server;
 
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
@@ -30,8 +15,6 @@ import java.io.IOException;
 import java.util.concurrent.ThreadFactory;
 import java.net.InetSocketAddress;
 import java.net.SocketAddress;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 import io.netty.bootstrap.ServerBootstrap;
 import io.netty.channel.ChannelFuture;
 import io.netty.channel.ChannelInitializer;
@@ -43,23 +26,20 @@ import io.netty.channel.socket.nio.NioServerSocketChannel;
 import io.netty.handler.logging.LogLevel;
 import io.netty.handler.logging.LoggingHandler;
 import io.netty.util.concurrent.DefaultEventExecutorGroup;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
-/**
- * @filename:AvatarMQBrokerServer.java
- * @description:AvatarMQBrokerServer功能模块
- * @author tangjie<https://github.com/tang-jie>
- * @blog http://www.cnblogs.com/jietang/
- * @since 2016-8-11
- */
 public class AvatarMQBrokerServer extends BrokerParallelServer implements RemotingServer {
 
+    public static final Logger logger = LoggerFactory.getLogger(AvatarMQBrokerServer.class);
+
     private ThreadFactory threadBossFactory = new ThreadFactoryBuilder()
-            .setNameFormat("AvatarMQBroker[BossSelector]-%d")
+            .setNameFormat("ZeroMQBroker[BossSelector]-%d")
             .setDaemon(true)
             .build();
 
     private ThreadFactory threadWorkerFactory = new ThreadFactoryBuilder()
-            .setNameFormat("AvatarMQBroker[WorkerSelector]-%d")
+            .setNameFormat("ZeroMQBroker[WorkerSelector]-%d")
             .setDaemon(true)
             .build();
 
@@ -85,7 +65,6 @@ public class AvatarMQBrokerServer extends BrokerParallelServer implements Remoti
             handler = new MessageBrokerHandler().buildConsumerHook(new ConsumerMessageHook()).buildProducerHook(new ProducerMessageHook());
 
             boss = new NioEventLoopGroup(1, threadBossFactory);
-
             workers = new NioEventLoopGroup(parallel, threadWorkerFactory, NettyUtil.getNioSelectorProvider());
 
             final KryoCodecUtil util = new KryoCodecUtil(KryoPoolFactory.getKryoPoolInstance());
@@ -93,28 +72,27 @@ public class AvatarMQBrokerServer extends BrokerParallelServer implements Remoti
             bootstrap = new ServerBootstrap();
 
             bootstrap.group(boss, workers).channel(NioServerSocketChannel.class)
-                    .option(ChannelOption.SO_BACKLOG, 1024)
-                    .option(ChannelOption.SO_REUSEADDR, true)
-                    .option(ChannelOption.SO_KEEPALIVE, false)
-                    .childOption(ChannelOption.TCP_NODELAY, true)
-                    .option(ChannelOption.SO_SNDBUF, nettyClustersConfig.getClientSocketSndBufSize())
-                    .option(ChannelOption.SO_RCVBUF, nettyClustersConfig.getClientSocketRcvBufSize())
-                    .handler(new LoggingHandler(LogLevel.INFO))
-                    .localAddress(serverIpAddr)
-                    .childHandler(new ChannelInitializer<SocketChannel>() {
-                        public void initChannel(SocketChannel ch)
-                                throws Exception {
-                            ch.pipeline().addLast(
+                     .option(ChannelOption.SO_BACKLOG, 1024)
+                     .option(ChannelOption.SO_REUSEADDR, true)
+                     .option(ChannelOption.SO_KEEPALIVE, false)
+                     .childOption(ChannelOption.TCP_NODELAY, true)
+                     .option(ChannelOption.SO_SNDBUF, nettyClustersConfig.getClientSocketSndBufSize())
+                     .option(ChannelOption.SO_RCVBUF, nettyClustersConfig.getClientSocketRcvBufSize())
+                     .handler(new LoggingHandler(LogLevel.INFO))
+                     .localAddress(serverIpAddr)
+                     .childHandler(new ChannelInitializer<SocketChannel>() {
+                         public void initChannel(SocketChannel ch) {
+                             ch.pipeline().addLast(
                                     defaultEventExecutorGroup,
                                     new MessageObjectEncoder(util),
                                     new MessageObjectDecoder(util),
                                     handler);
-                        }
-                    });
-
+                         }
+                     });
+            // 创建 executorService
             super.init();
         } catch (IOException ex) {
-            Logger.getLogger(AvatarMQBrokerServer.class.getName()).log(Level.SEVERE, null, ex);
+            logger.warn(ex.getMessage());
         }
     }
 
@@ -129,25 +107,22 @@ public class AvatarMQBrokerServer extends BrokerParallelServer implements Remoti
             workers.shutdownGracefully();
             defaultEventExecutorGroup.shutdownGracefully();
         } catch (Exception e) {
-            e.printStackTrace();
-            System.err.println("AvatarMQBrokerServer shutdown exception!");
+            logger.warn("ZeroMQ broker server shutdown exception!");
+            logger.warn(e.getMessage());
         }
     }
 
     public void start() {
         try {
             String ipAddress = NettyUtil.socketAddress2String(serverIpAddr);
-            System.out.printf("broker server ip:[%s]\n", ipAddress);
-
+            logger.info("broker server ip:[" + ipAddress + "]");
             ChannelFuture sync = this.bootstrap.bind().sync();
-
             super.start();
-
             sync.channel().closeFuture().sync();
             InetSocketAddress addr = (InetSocketAddress) sync.channel().localAddress();
             brokerServerPort = addr.getPort();
         } catch (InterruptedException ex) {
-            Logger.getLogger(AvatarMQBrokerServer.class.getName()).log(Level.SEVERE, null, ex);
+            logger.warn(ex.getMessage());
         }
     }
 }

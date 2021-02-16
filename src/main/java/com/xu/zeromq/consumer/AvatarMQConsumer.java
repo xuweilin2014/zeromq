@@ -73,7 +73,7 @@ public class AvatarMQConsumer extends MessageProcessor implements AvatarMQAction
 
         request.setMsgParams(subscript);
 
-        sendAsynMessage(request);
+        sendAsyncMessage(request);
     }
 
     public void init() {

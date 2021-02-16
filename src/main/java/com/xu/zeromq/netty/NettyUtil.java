@@ -1,5 +1,6 @@
 package com.xu.zeromq.netty;
 
+import com.xu.zeromq.core.MessageSystemConfig;
 import io.netty.channel.Channel;
 import java.io.IOException;
 import java.lang.reflect.Method;
@@ -123,9 +124,8 @@ public class NettyUtil {
     }
 
     public static SocketAddress string2SocketAddress(final String addr) {
-        String[] s = addr.split(":");
-        InetSocketAddress isa = new InetSocketAddress(s[0], Integer.valueOf(s[1]));
-        return isa;
+        String[] addrs = addr.split(MessageSystemConfig.IpV4AddressDelimiter);
+        return new InetSocketAddress(addrs[0], Integer.parseInt(addrs[1]));
     }
 
     public static String socketAddress2String(final SocketAddress addr) {
@@ -167,7 +167,9 @@ public class NettyUtil {
     }
 
     public static boolean validateChannel(Channel channel) {
-        Preconditions.checkNotNull(channel, "channel can not be null");
+        // 检查 channel 对象是否为 null
+        Preconditions.checkNotNull(channel, "channel cannot be null");
+        // 确认 channel 是否是 active，是否开启 open，以及是否可以写入
         return channel.isActive() && channel.isOpen() && channel.isWritable();
     }
 }

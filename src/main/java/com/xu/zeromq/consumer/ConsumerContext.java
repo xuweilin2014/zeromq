@@ -1,18 +1,3 @@
-/**
- * Copyright (C) 2016 Newland Group Holding Limited
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
 package com.xu.zeromq.consumer;
 
 import com.xu.zeromq.model.RemoteChannelData;
@@ -25,22 +10,18 @@ import java.util.concurrent.CopyOnWriteArrayList;
 import org.apache.commons.collections.Predicate;
 import org.apache.commons.collections.iterators.FilterIterator;
 
-/**
- * @filename:ConsumerContext.java
- * @description:ConsumerContext功能模块
- * @author tangjie<https://github.com/tang-jie>
- * @blog http://www.cnblogs.com/jietang/
- * @since 2016-8-11
- */
 public class ConsumerContext {
 
-    private static final CopyOnWriteArrayList<ClustersRelation> relationArray = new CopyOnWriteArrayList<ClustersRelation>();
+    // 消费者集群关系的定义，ClustersRelation 可以看成是一个二元组 <cluster_id, ConsumerCluster> 的封装
+    private static final CopyOnWriteArrayList<ClustersRelation> relationArray = new CopyOnWriteArrayList<>();
+    // 消费者集群状态，ClusterState 可以看成是一个二元组 <cluster_id, cluster_state> 的封装
     private static final CopyOnWriteArrayList<ClustersState> stateArray = new CopyOnWriteArrayList<ClustersState>();
 
-    public static void setClustersStat(String clusters, int stat) {
+    public static void addClustersStat(String clusters, int stat) {
         stateArray.add(new ClustersState(clusters, stat));
     }
 
+    // 根据消费者集群编码 cluster_id 获取一个消费者集群的状态
     public static int getClustersStat(final String clusters) {
 
         Predicate predicate = new Predicate() {
@@ -50,17 +31,18 @@ public class ConsumerContext {
             }
         };
 
+        // 获取特定消费者集群的状态
         Iterator iterator = new FilterIterator(stateArray.iterator(), predicate);
 
         ClustersState state = null;
-        while (iterator.hasNext()) {
+        if (iterator.hasNext()) {
             state = (ClustersState) iterator.next();
-            break;
-
         }
+
         return (state != null) ? state.getState() : 0;
     }
 
+    // 根据消费者集群编码 cluster_id 查找一个消费者集群
     public static ConsumerClusters selectByClusters(final String clusters) {
         Predicate predicate = new Predicate() {
             public boolean evaluate(Object object) {
@@ -69,6 +51,7 @@ public class ConsumerContext {
             }
         };
 
+        // 获取特定消费者集群对象
         Iterator iterator = new FilterIterator(relationArray.iterator(), predicate);
 
         ClustersRelation relation = null;
@@ -80,11 +63,13 @@ public class ConsumerContext {
         return (relation != null) ? relation.getClusters() : null;
     }
 
+    // 查找一下关注这个主题的消费者集群集合
     public static List<ConsumerClusters> selectByTopic(String topic) {
 
-        List<ConsumerClusters> clusters = new ArrayList<ConsumerClusters>();
+        List<ConsumerClusters> clusters = new ArrayList<>();
 
         for (int i = 0; i < relationArray.size(); i++) {
+            // subscriptionTable 保存了某一个消费者集群所关注的所有主题
             ConcurrentHashMap<String, SubscriptionData> subscriptionTable = relationArray.get(i).getClusters().getSubMap();
             if (subscriptionTable.containsKey(topic)) {
                 clusters.add(relationArray.get(i).getClusters());
@@ -94,17 +79,22 @@ public class ConsumerContext {
         return clusters;
     }
 
+    // 添加消费者集群
     public static void addClusters(String clusters, RemoteChannelData channelinfo) {
+        // 这里的 clusters 可以看成是 cluster_id，也就是消费者集群的标识
         ConsumerClusters manage = selectByClusters(clusters);
+        // 如果没有 cluster_id 对应的消费者集群
         if (manage == null) {
             ConsumerClusters newClusters = new ConsumerClusters(clusters);
             newClusters.attachRemoteChannelData(channelinfo.getClientId(), channelinfo);
             relationArray.add(new ClustersRelation(clusters, newClusters));
+        // 如果在消费者集群中找到了 clientId 对应的消费者
         } else if (manage.findRemoteChannelData(channelinfo.getClientId()) != null) {
             manage.detachRemoteChannelData(channelinfo.getClientId());
             manage.attachRemoteChannelData(channelinfo.getClientId(), channelinfo);
+        // 如果在消费者集群中没有找到 clientId 对应的消费者
         } else {
-            String topic = channelinfo.getSubcript().getTopic();
+            String topic = channelinfo.getSubscript().getTopic();
             boolean touchChannel = manage.getSubMap().containsKey(topic);
             if (touchChannel) {
                 manage.attachRemoteChannelData(channelinfo.getClientId(), channelinfo);
@@ -116,12 +106,14 @@ public class ConsumerContext {
         }
     }
 
+    // 从一个消费者集群中删除一个消费者
     public static void unLoad(String clientId) {
-
+        // 遍历 relationArray 中的每一个 ConsumerClusters 对象
         for (int i = 0; i < relationArray.size(); i++) {
             String id = relationArray.get(i).getId();
             ConsumerClusters manage = relationArray.get(i).getClusters();
 
+            // 查看 ConsumerClusters 是否包含 client_id 这个消费者，如果包含，则移除
             if (manage.findRemoteChannelData(clientId) != null) {
                 manage.detachRemoteChannelData(clientId);
             }

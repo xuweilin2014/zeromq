@@ -11,16 +11,18 @@ import com.xu.zeromq.netty.NettyClustersConfig;
 
 public class BrokerParallelServer implements RemotingServer {
 
+    // parallel 是核心线程数，也就是处理器的数目 * 2
     protected int parallel = NettyClustersConfig.getWorkerThreads();
+
     protected ListeningExecutorService executor = MoreExecutors.listeningDecorator(Executors.newFixedThreadPool(parallel));
+
     protected ExecutorCompletionService<Void> executorService;
 
     public BrokerParallelServer() {
-
     }
 
     public void init() {
-        executorService = new ExecutorCompletionService<Void>(executor);
+        executorService = new ExecutorCompletionService<>(executor);
     }
 
     public void start() {

@@ -40,7 +40,7 @@ public class ConsumerMessageHook implements ConsumerMessageListener {
         SubscriptionData subscript = new SubscriptionData();
 
         subscript.setTopic(request.getTopic());
-        channel.setSubcript(subscript);
+        channel.setSubscript(subscript);
 
         ConsumerContext.addClusters(request.getClusterId(), channel);
     }
