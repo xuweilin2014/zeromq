@@ -15,6 +15,8 @@ public class BrokerConsumerMessageStrategy implements BrokerStrategy {
 
     public void messageDispatch(RequestMessage request, ResponseMessage response) {
         String key = response.getMsgId();
+
+        // 在 SendMessageLauncher 发送消息到 consumer 端时，会创建一个 CallBackInvoker，然后阻塞
         if (SendMessageLauncher.getInstance().trace(key)) {
             CallBackInvoker<Object> future = SendMessageLauncher.getInstance().detach(key);
             if (future != null) {
@@ -31,4 +33,5 @@ public class BrokerConsumerMessageStrategy implements BrokerStrategy {
 
     public void setChannelHandler(ChannelHandlerContext channelHandler) {
     }
+
 }

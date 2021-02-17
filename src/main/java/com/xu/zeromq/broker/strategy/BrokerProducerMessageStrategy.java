@@ -10,6 +10,7 @@ import io.netty.channel.ChannelHandlerContext;
 public class BrokerProducerMessageStrategy implements BrokerStrategy {
 
     private ProducerMessageListener hookProducer;
+
     private ChannelHandlerContext channelHandler;
 
     public BrokerProducerMessageStrategy() {
@@ -31,4 +32,5 @@ public class BrokerProducerMessageStrategy implements BrokerStrategy {
 
     public void setHookConsumer(ConsumerMessageListener hookConsumer) {
     }
+
 }

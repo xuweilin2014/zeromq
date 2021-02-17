@@ -21,8 +21,9 @@ public class BrokerSubscribeStrategy implements BrokerStrategy {
         SubscribeMessage subscription = (SubscribeMessage) request.getMsgParams();
         String clientKey = subscription.getConsumerId();
         RemoteChannelData channel = new RemoteChannelData(channelHandler.channel(), clientKey);
-        // 将对应 RemoteChannelData 和 SubscribeMessage 保存在 broker 服务器端
+        // 将对应 RemoteChannelData 和 SubscribeMessage 信息保存在 broker 服务器端
         hookConsumer.hookConsumerMessage(subscription, channel);
+        // 接收到 consumer 发送过来的 subscribe 消息之后，返回 consumer ack 消息
         response.setMsgType(MessageType.AvatarMQConsumerAck);
         channelHandler.writeAndFlush(response);
     }

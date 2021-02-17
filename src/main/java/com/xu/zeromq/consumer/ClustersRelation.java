@@ -5,6 +5,7 @@ import org.apache.commons.lang3.builder.EqualsBuilder;
 public class ClustersRelation {
 
     private String id;
+
     private ConsumerClusters clusters;
 
     ClustersRelation() {

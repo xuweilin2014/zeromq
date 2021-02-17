@@ -39,10 +39,9 @@ public class SendMessageLauncher {
             ChannelFuture channelFuture = channel.writeAndFlush(response);
             channelFuture.addListener(new LauncherListener(invoker));
             try {
-                Object result = invoker.getMessageResult(timeout, TimeUnit.MILLISECONDS);
-                return result;
-            } catch (RuntimeException e) {
-                throw e;
+                // 阻塞等待消费者端接收到消息之后，返回处理结果 ConsumerAckMessage
+                // 在 MessageConsumerHandler 中，consumer 会对 broker 发送过来的消息进行处理，然后返回 ConsumerAckMessage
+                return invoker.getMessageResult(timeout, TimeUnit.MILLISECONDS);
             } finally {
                 invokeMap.remove(response.getMsgId());
             }

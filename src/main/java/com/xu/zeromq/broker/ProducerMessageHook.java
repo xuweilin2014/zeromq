@@ -59,13 +59,14 @@ public class ProducerMessageHook implements ProducerMessageListener {
             }
         };
 
+        // if any.evaluate(): return trueClosure.execute() else: return falseClosure.execute
         Closure ifClosure = ClosureUtils.ifClosure(any, trueClosure, falseClosure);
         // 遍历 focusTopicGroup 中的每一个消费者集群，如果这个消费者集群关注了 topic 主题的话，就将其添加到 clustersSet 中
         CollectionUtils.forAllDo(focusTopicGroup, ifClosure);
     }
 
     private boolean checkClustersSet(Message msg, String requestId) {
-        // 如果 clustersSet 的 size 为 0，那么说明没有消费者订阅对应的主题 topic，并且创建一个 ack 对象，
+        // 如果 clustersSet 的 size 为 0，那么说明没有消费者集群订阅对应的主题 topic，并且创建一个 ack 对象，
         // 并且将其保存到 AckTaskQueue 中，最后返回 false
         if (clustersSet.size() == 0) {
             logger.info("ZeroMQ does not have matched clusters!");
@@ -82,7 +83,8 @@ public class ProducerMessageHook implements ProducerMessageListener {
     }
 
     private void dispatchTask(Message msg, String topic) {
-        List<MessageDispatchTask> tasks = new ArrayList<MessageDispatchTask>();
+
+        List<MessageDispatchTask> tasks = new ArrayList<>();
         // 遍历 clustersSet 中每一个订阅了主题 topic 的消费者集群，并且创建 MessageDispatchTask，
         // 并且将其保存到 MessageTaskQueue 中
         for (int i = 0; i < clustersSet.size(); i++) {
@@ -98,6 +100,7 @@ public class ProducerMessageHook implements ProducerMessageListener {
         for (int i = 0; i < tasks.size(); i++) {
             SemaphoreCache.release(MessageSystemConfig.NotifyTaskSemaphoreValue);
         }
+
     }
 
     private void taskAck(Message msg, String requestId) {
@@ -117,12 +120,16 @@ public class ProducerMessageHook implements ProducerMessageListener {
         ChannelCache.pushRequest(requestId, channel);
 
         String topic = msg.getTopic();
-        // 获取到关注这个主题 topic 的消费者集群
+        // 获取到关注这个主题 topic 的消费者集群列表
         focusTopicGroup = ConsumerContext.selectByTopic(topic);
         // 再进行一次过滤，筛选出关注了主题 topic 的消费者集群
         filterByTopic(topic);
 
+        // 检查是否有消费者集群订阅上面的 topic 主题：
+        // 1.如果没有的话，就创建 ProducerAckMessage 对象，并且将其保存到 AckTaskQueue 中，然后返回 false
+        // 2.如果有的话，就直接返回 true
         if (checkClustersSet(msg, requestId)) {
+            // 为 clustersSet 中的每一个消费者集群创建一个 MessageDispatchTask，并且保存到 MessageTaskQueue 中
             dispatchTask(msg, topic);
             taskAck(msg, requestId);
             clustersSet.clear();

@@ -50,8 +50,7 @@ public class BrokerStrategyContext {
     public void invoke() {
         switch (request.getMsgType()) {
             // producer 或者 consumer 发送的消息
-            // source 为 AvatarMQConsumer 的消息是 consumer 接收到 producer 发送的消息并且进行处理之后，
-            // 返回的 ack 消息结果
+            // source 为 AvatarMQConsumer 的消息，是 consumer 接收到 producer 发送的消息并且进行处理之后，返回的 ack 消息结果
             // source 为 AvatarMQProducer 的消息是 producer 发送给 broker 的消息
             case AvatarMQMessage:
                 strategy = (BrokerStrategy) strategyMap.get(request.getMsgSource() == MessageSource.AvatarMQProducer ? AvatarMQProducerMessageStrategy : AvatarMQConsumerMessageStrategy);

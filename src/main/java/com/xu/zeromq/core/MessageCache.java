@@ -31,9 +31,11 @@ public class MessageCache<T> {
         commitMessage(cache);
     }
 
+    @SuppressWarnings("CollectionAddAllCanBeReplacedWithConstructor")
     private void commitMessage(ConcurrentLinkedQueue<T> messages) {
         LinkedList<T> list = new LinkedList<T>();
 
+        // 将 queue 中的累积的多条消息都添加到 list 中，然后进行派发
         list.addAll(messages);
         cache.clear();
 
@@ -41,6 +43,7 @@ public class MessageCache<T> {
             parallelDispatch(list);
             list.clear();
         }
+
     }
 
     public boolean hold(long timeout) {
@@ -54,7 +57,7 @@ public class MessageCache<T> {
 
     protected Pair<Integer, Integer> calculateBlocks(int parallel, int sizeOfTasks) {
         int numberOfThreads = Math.min(parallel, sizeOfTasks);
-        Pair<Integer, Integer> pair = new MutablePair<Integer, Integer>(sizeOfTasks / numberOfThreads, numberOfThreads);
+        Pair<Integer, Integer> pair = new MutablePair<>(sizeOfTasks / numberOfThreads, numberOfThreads);
         return pair;
     }
 }

@@ -43,4 +43,5 @@ public class MessageBrokerHandler extends ShareMessageEventWrapper<Object> {
     public void beforeMessage(Object msg) {
         message.set((RequestMessage) msg);
     }
+
 }

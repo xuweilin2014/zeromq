@@ -29,10 +29,13 @@ public class SendMessageCache extends MessageCache<MessageDispatchTask> {
 
     // 并发地对消息进行派发
     public void parallelDispatch(LinkedList<MessageDispatchTask> list) {
+
         List<Callable<Void>> tasks = new ArrayList<Callable<Void>>();
         int startPosition = 0;
         Pair<Integer, Integer> pair = calculateBlocks(list.size(), list.size());
+        // 并发所需要的线程数
         int numberOfThreads = pair.getRight();
+        // 每一个线程负责的消息条数
         int blocks = pair.getLeft();
 
         for (int i = 0; i < numberOfThreads; i++) {
@@ -41,6 +44,7 @@ public class SendMessageCache extends MessageCache<MessageDispatchTask> {
             // 将 list 数组中从 startPosition 开始的 blocks 个 MessageDispatchTask 对象拷贝到
             // task 数组中（从 0 开始，并且 task 数组的大小恰好是 blocks 个 MessageDispatchTask 对象）
             System.arraycopy(list.toArray(), startPosition, task, 0, blocks);
+            // 一个 SendMessageTask 会负责 blocks 条消息的发送
             tasks.add(new SendMessageTask(phaser, task));
             startPosition += blocks;
         }
@@ -49,5 +53,6 @@ public class SendMessageCache extends MessageCache<MessageDispatchTask> {
         for (Callable<Void> element : tasks) {
             executor.submit(element);
         }
+
     }
 }

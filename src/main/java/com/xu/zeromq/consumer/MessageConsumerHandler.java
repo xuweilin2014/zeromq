@@ -10,6 +10,7 @@ import com.xu.zeromq.model.MessageType;
 import com.xu.zeromq.netty.MessageEventWrapper;
 import com.xu.zeromq.netty.MessageProcessor;
 
+@SuppressWarnings("GrazieInspection")
 public class MessageConsumerHandler extends MessageEventWrapper<Object> {
 
     private String key;
@@ -29,7 +30,11 @@ public class MessageConsumerHandler extends MessageEventWrapper<Object> {
     }
 
     public void handleMessage(ChannelHandlerContext ctx, Object msg) {
-        // factory 中包含 key 对应的 CallBackInvoker，并且用户定义的 hook 不为 null
+        // factory 中不包含 key 对应的 CallBackInvoker，并且用户定义的 hook 不为 null，才会使用 hook 来对 message 进行处理
+        // 这是因为，consumer 发送 subscribe message 到 broker 之后，会在 factory 中生成一个 <msgId, MessageConnectFactory>
+        // 映射关系，而 broker 在接收到 subscribe message 之后会返回一个 ZeroMQConsumerAck，这个 ack 会直接被 consumer 忽略掉。
+        //
+        // 当 broker 发送 consumer 所订阅主题的消息过来时，才会进入 if 语句进行处理
         if (!factory.traceInvoker(key) && hook != null) {
             ResponseMessage message = (ResponseMessage) msg;
             // 获取用户定义的 hook 来对 message 进行处理，并且获取到处理的结果 ConsumerAckMessage

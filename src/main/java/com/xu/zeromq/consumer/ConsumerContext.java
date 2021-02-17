@@ -71,6 +71,7 @@ public class ConsumerContext {
         for (int i = 0; i < relationArray.size(); i++) {
             // subscriptionTable 保存了某一个消费者集群所关注的所有主题
             ConcurrentHashMap<String, SubscriptionData> subscriptionTable = relationArray.get(i).getClusters().getSubMap();
+            // 如果当前这个消费者集群关注了这个主题，那么就将其加入到 clusters 数组中返回
             if (subscriptionTable.containsKey(topic)) {
                 clusters.add(relationArray.get(i).getClusters());
             }

@@ -61,7 +61,6 @@ public class SendMessageController implements Callable<Void> {
             SemaphoreCache.acquire(MessageSystemConfig.NotifyTaskSemaphoreValue);
             // 消息是以 MessageDispatchTask 为载体的，MessageDispatchTask 代表了消息的主题 topic，message，消息集群的 id
             MessageDispatchTask task = MessageTaskQueue.getInstance().getTask();
-
             queue.add(task);
 
             if (queue.size() == 0) {
@@ -78,13 +77,14 @@ public class SendMessageController implements Callable<Void> {
             // 2.消息累积到一定数目之后才进行派发，并且消息累积数目达到要求
             // 3.消息还没有累积达到要求，但是 flushTask 变为了 true，也就是必须要进行派发
             if (queue.size() > 0 && (queue.size() % commitNumber == 0 || flushTask.get())) {
+                // queue 中可能累积了多条消息，会一起进行派发
                 ref.commit(queue);
                 queue.clear();
                 flushTask.compareAndSet(true, false);
             }
 
-            // flushTask 用来控制进行消息派发的速率，只要 flushTask 为 true，那么就一定会进行消息派发
-            // 每隔 1s，会将 flushTask 设置成 true
+            // flushTask 用来控制进行消息派发的速率，只要 flushTask 为 true，并且有消息，那么就一定会进行消息派发
+            // 每隔 period，会将 flushTask 设置成 true
             timer.scheduleAtFixedRate(new TimerTask() {
                 public void run() {
                     try {
@@ -95,6 +95,7 @@ public class SendMessageController implements Callable<Void> {
                 }
             }, 1000, period);
         }
+
         return null;
     }
 }
