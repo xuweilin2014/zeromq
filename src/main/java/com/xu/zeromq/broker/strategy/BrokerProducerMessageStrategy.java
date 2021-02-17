@@ -17,6 +17,7 @@ public class BrokerProducerMessageStrategy implements BrokerStrategy {
 
     public void messageDispatch(RequestMessage request, ResponseMessage response) {
         Message message = (Message) request.getMsgParams();
+        // 如果有消费者对发送的消息进行订阅，那么就将消息推送给这些 consumer
         hookProducer.hookProducerMessage(message, request.getMsgId(), channelHandler.channel());
     }
 

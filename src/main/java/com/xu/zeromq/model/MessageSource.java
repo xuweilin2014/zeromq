@@ -3,7 +3,9 @@ package com.xu.zeromq.model;
 public enum MessageSource {
 
     AvatarMQConsumer(1),
+
     AvatarMQBroker(2),
+
     AvatarMQProducer(3);
 
     private int source;

@@ -19,12 +19,12 @@ public class MessageBrokerHandler extends ShareMessageEventWrapper<Object> {
     }
 
     public MessageBrokerHandler buildProducerHook(ProducerMessageListener hookProducer) {
-        this.hookProducer = new AtomicReference<ProducerMessageListener>(hookProducer);
+        this.hookProducer = new AtomicReference<>(hookProducer);
         return this;
     }
 
     public MessageBrokerHandler buildConsumerHook(ConsumerMessageListener hookConsumer) {
-        this.hookConsumer = new AtomicReference<ConsumerMessageListener>(hookConsumer);
+        this.hookConsumer = new AtomicReference<>(hookConsumer);
         return this;
     }
 

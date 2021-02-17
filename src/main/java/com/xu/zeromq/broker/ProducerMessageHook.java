@@ -113,7 +113,7 @@ public class ProducerMessageHook implements ProducerMessageListener {
     }
 
     public void hookProducerMessage(Message msg, String requestId, Channel channel) {
-
+        // 将 msgId 和 channel 一一对应保存在 ChannelCache 中
         ChannelCache.pushRequest(requestId, channel);
 
         String topic = msg.getTopic();
