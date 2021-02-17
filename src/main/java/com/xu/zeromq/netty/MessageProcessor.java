@@ -86,7 +86,7 @@ public class MessageProcessor {
         }
 
         Map<String, CallBackInvoker<Object>> callBackMap = factory.getCallBackMap();
-        final CallBackInvoker<Object> invoker = new CallBackInvoker<Object>();
+        final CallBackInvoker<Object> invoker = new CallBackInvoker<>();
         // request 中的 msgId 其实就是消息 id
         // 消息 id 和 CallBackInvoker 一一对应，一起保存在 MessageConnectFactory 的 callBackMap 中
         callBackMap.put(request.getMsgId(), invoker);

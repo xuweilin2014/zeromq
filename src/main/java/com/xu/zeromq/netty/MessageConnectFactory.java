@@ -65,7 +65,7 @@ public class MessageConnectFactory {
         }
     }
 
-    public void setMessageHandle(ChannelInboundHandlerAdapter messageHandler) {
+    public void setMessageHandler(ChannelInboundHandlerAdapter messageHandler) {
         // 这里的 messageHandler 既可以是 MessageProducerHandler，也可以是 MessageConsumerHandler
         this.messageHandler = messageHandler;
     }

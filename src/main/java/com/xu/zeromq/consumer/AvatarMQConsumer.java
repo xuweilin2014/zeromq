@@ -1,18 +1,3 @@
-/**
- * Copyright (C) 2016 Newland Group Holding Limited
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
 package com.xu.zeromq.consumer;
 
 import com.google.common.base.Joiner;
@@ -25,28 +10,31 @@ import com.xu.zeromq.msg.SubscribeMessage;
 import com.xu.zeromq.msg.UnSubscribeMessage;
 import com.xu.zeromq.netty.MessageProcessor;
 
-/**
- * @filename:AvatarMQConsumer.java
- * @description:AvatarMQConsumer功能模块
- * @author tangjie<https://github.com/tang-jie>
- * @blog http://www.cnblogs.com/jietang/
- * @since 2016-8-11
- */
 public class AvatarMQConsumer extends MessageProcessor implements AvatarMQAction {
 
+    // 有 consumer 自己定义的消息消费方法
     private ProducerMessageHook hook;
+
     private String brokerServerAddress;
+
     private String topic;
+
     private boolean subscribeMessage = false;
+
     private boolean running = false;
+
+    // 默认消费者集群 id
     private String defaultClusterId = "AvatarMQConsumerClusters";
+
     private String clusterId = "";
+
     private String consumerId = "";
 
     public AvatarMQConsumer(String brokerServerAddress, String topic, ProducerMessageHook hook) {
         super(brokerServerAddress);
         this.hook = hook;
         this.brokerServerAddress = brokerServerAddress;
+        // 当前消费者要订阅的消息主题
         this.topic = topic;
     }
 
@@ -61,8 +49,11 @@ public class AvatarMQConsumer extends MessageProcessor implements AvatarMQAction
         running = false;
     }
 
+    // 发送消息到 broker 端，表明此 consumer 订阅的主题以及 consumerId 和 clusterId
     private void register() {
+        // 发送或者接收到的 broker 消息分为两种：RequestMessage 以及 ResponseMessage
         RequestMessage request = new RequestMessage();
+        // 发送的消息类型为订阅消息
         request.setMsgType(MessageType.AvatarMQSubscribe);
         request.setMsgId(new MessageIdGenerator().generate());
 
@@ -77,13 +68,17 @@ public class AvatarMQConsumer extends MessageProcessor implements AvatarMQAction
     }
 
     public void init() {
-        super.getMessageConnectFactory().setMessageHandle(new MessageConsumerHandler(this, new ConsumerHookMessageEvent(hook)));
+        // ConsumerHookMessage 用来调用用户自己定义的 hook 对象对消息进行处理，然后返回 ConsumerAckMessage
+        super.getMessageConnectFactory().setMessageHandler(new MessageConsumerHandler(this, new ConsumerHookMessageEvent(hook)));
         Joiner joiner = Joiner.on(MessageSystemConfig.MessageDelimiter).skipNulls();
+        // 消费者集群 id（clusterId） + @ + topic + @ + msgId
         consumerId = joiner.join((clusterId.equals("") ? defaultClusterId : clusterId), topic, new MessageIdGenerator().generate());
     }
 
     public void start() {
+        // 判断 subscribeMessage 是否为 true
         if (isSubscribeMessage()) {
+            // 尝试连接到 broker 服务器
             super.getMessageConnectFactory().connect();
             register();
             running = true;

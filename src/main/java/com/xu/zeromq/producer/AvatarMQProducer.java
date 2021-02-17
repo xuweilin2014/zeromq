@@ -56,7 +56,7 @@ public class AvatarMQProducer extends MessageProcessor implements AvatarMQAction
         hook.setBrokerConnect(brokerConnect);
         hook.setRunning(running);
         // 设置 MessageProducerHandler，也就是 Producer -> Broker 的连接 pipeline 中可以有这个 handler 来进行处理
-        super.getMessageConnectFactory().setMessageHandle(new MessageProducerHandler(this, hook));
+        super.getMessageConnectFactory().setMessageHandler(new MessageProducerHandler(this, hook));
     }
 
     public ProducerAckMessage deliver(Message message) {
