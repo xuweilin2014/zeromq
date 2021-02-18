@@ -41,6 +41,7 @@ public class SendMessageLauncher {
             try {
                 // 阻塞等待消费者端接收到消息之后，返回处理结果 ConsumerAckMessage
                 // 在 MessageConsumerHandler 中，consumer 会对 broker 发送过来的消息进行处理，然后返回 ConsumerAckMessage
+                // 这个 ConsumerAckMessage 会在 broker 端的 BrokerConsumerMessageStrategy 中被处理，从而唤醒这里阻塞的线程
                 return invoker.getMessageResult(timeout, TimeUnit.MILLISECONDS);
             } finally {
                 invokeMap.remove(response.getMsgId());

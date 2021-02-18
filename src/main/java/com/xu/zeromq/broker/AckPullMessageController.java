@@ -27,11 +27,14 @@ public class AckPullMessageController implements Callable<Void> {
     public Void call() {
         while (!stopped) {
             SemaphoreCache.acquire(MessageSystemConfig.AckTaskSemaphoreValue);
+
+            // 从 AckTaskQueue 中获取保存的 ProducerAckMessage
             ProducerAckMessage ack = AckTaskQueue.getAck();
             String requestId = ack.getAck();
             ack.setAck("");
-
             Channel channel = ChannelCache.findChannel(requestId);
+
+            // 将 ProducerAckMessage 保存到 ResponseMessage，然后把 ResponseMessage 发送给 producer 端
             if (NettyUtil.validateChannel(channel)) {
                 ResponseMessage response = new ResponseMessage();
                 response.setMsgId(requestId);

@@ -82,6 +82,7 @@ public class ProducerMessageHook implements ProducerMessageListener {
         }
     }
 
+    // 将要派发的消息包装成 MessageDispatchTask，然后保存到 MessageTaskQueue 中，等待派发
     private void dispatchTask(Message msg, String topic) {
 
         List<MessageDispatchTask> tasks = new ArrayList<>();
@@ -126,11 +127,12 @@ public class ProducerMessageHook implements ProducerMessageListener {
         filterByTopic(topic);
 
         // 检查是否有消费者集群订阅上面的 topic 主题：
-        // 1.如果没有的话，就创建 ProducerAckMessage 对象，并且将其保存到 AckTaskQueue 中，然后返回 false
+        // 1.如果没有的话，就创建 ProducerAckMessage 对象，并且将其保存到 AckTaskQueue 中，然后返回 false，跳过下面的 if 语句
         // 2.如果有的话，就直接返回 true
         if (checkClustersSet(msg, requestId)) {
             // 为 clustersSet 中的每一个消费者集群创建一个 MessageDispatchTask，并且保存到 MessageTaskQueue 中
             dispatchTask(msg, topic);
+            // 根据 msg 的 requestId 生成一个 key 保存到 AckMessageCache 中
             taskAck(msg, requestId);
             clustersSet.clear();
         }

@@ -17,6 +17,8 @@ public class BrokerConsumerMessageStrategy implements BrokerStrategy {
         String key = response.getMsgId();
 
         // 在 SendMessageLauncher 发送消息到 consumer 端时，会创建一个 CallBackInvoker，然后阻塞
+        // 当 consumer 接收到发送过去的消息，并且进行了处理之后，就会返回一个 ConsumerAckMessage，然后
+        // 在这里被接收到，然后唤醒前面阻塞在 CallBackInvoker 中的线程
         if (SendMessageLauncher.getInstance().trace(key)) {
             CallBackInvoker<Object> future = SendMessageLauncher.getInstance().detach(key);
             if (future != null) {

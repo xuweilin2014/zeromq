@@ -30,7 +30,7 @@ public class SendMessageCache extends MessageCache<MessageDispatchTask> {
     // 并发地对消息进行派发
     public void parallelDispatch(LinkedList<MessageDispatchTask> list) {
 
-        List<Callable<Void>> tasks = new ArrayList<Callable<Void>>();
+        List<Callable<Void>> tasks = new ArrayList<>();
         int startPosition = 0;
         Pair<Integer, Integer> pair = calculateBlocks(list.size(), list.size());
         // 并发所需要的线程数

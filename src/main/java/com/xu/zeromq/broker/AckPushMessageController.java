@@ -23,7 +23,7 @@ public class AckPushMessageController implements Callable<Void> {
         stopped = true;
     }
 
-    public boolean isStoped() {
+    public boolean isStopped() {
         return stopped;
     }
 }
