@@ -7,7 +7,6 @@ import com.xu.zeromq.core.MessageSystemConfig;
 import com.xu.zeromq.core.SemaphoreCache;
 import com.xu.zeromq.model.MessageType;
 import com.xu.zeromq.model.ResponseMessage;
-import com.xu.zeromq.model.MessageSource;
 import com.xu.zeromq.netty.NettyUtil;
 import io.netty.channel.Channel;
 import java.util.concurrent.Callable;
@@ -38,8 +37,7 @@ public class AckPullMessageController implements Callable<Void> {
             if (NettyUtil.validateChannel(channel)) {
                 ResponseMessage response = new ResponseMessage();
                 response.setMsgId(requestId);
-                response.setMsgSource(MessageSource.AvatarMQBroker);
-                response.setMsgType(MessageType.AvatarMQProducerAck);
+                response.setMsgType(MessageType.ProducerAck);
                 response.setMsgParams(ack);
 
                 channel.writeAndFlush(response);

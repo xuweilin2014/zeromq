@@ -1,7 +1,6 @@
 package com.xu.zeromq.producer;
 
 import com.xu.zeromq.core.AvatarMQAction;
-import com.xu.zeromq.model.MessageSource;
 import com.xu.zeromq.model.MessageType;
 import com.xu.zeromq.model.RequestMessage;
 import com.xu.zeromq.model.ResponseMessage;
@@ -56,7 +55,7 @@ public class AvatarMQProducer extends MessageProcessor implements AvatarMQAction
         hook.setBrokerConnect(brokerConnect);
         hook.setRunning(running);
         // 设置 MessageProducerHandler，也就是 Producer -> Broker 的连接 pipeline 中可以有这个 handler 来进行处理
-        super.getMessageConnectFactory().setMessageHandler(new MessageProducerHandler(this, hook));
+        super.getMessageConnectFactory().setMessageHandler(new ProducerHandler(this, hook));
     }
 
     public ProducerAckMessage deliver(Message message) {
@@ -76,9 +75,7 @@ public class AvatarMQProducer extends MessageProcessor implements AvatarMQAction
         // 发送的消息具体内容
         request.setMsgParams(message);
         // 发送的消息的类型
-        request.setMsgType(MessageType.AvatarMQMessage);
-        // 发送这个消息的来源是 zeromq producer
-        request.setMsgSource(MessageSource.AvatarMQProducer);
+        request.setMsgType(MessageType.Message);
         // 设置消息的 id
         message.setMsgId(request.getMsgId());
 

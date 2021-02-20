@@ -5,7 +5,9 @@ import java.io.Serializable;
 public class SubscribeMessage extends BaseMessage implements Serializable {
 
     private String clusterId;
+
     private String topic;
+
     private String consumerId;
 
     public SubscribeMessage() {

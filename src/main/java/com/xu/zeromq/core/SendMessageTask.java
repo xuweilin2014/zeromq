@@ -9,7 +9,6 @@ import com.xu.zeromq.model.MessageType;
 import com.xu.zeromq.model.RequestMessage;
 import com.xu.zeromq.model.ResponseMessage;
 import com.xu.zeromq.model.RemoteChannelData;
-import com.xu.zeromq.model.MessageSource;
 import com.xu.zeromq.model.MessageDispatchTask;
 import com.xu.zeromq.netty.NettyUtil;
 import java.util.concurrent.Callable;
@@ -40,8 +39,7 @@ public class SendMessageTask implements Callable<Void> {
                 RemoteChannelData channel = ConsumerContext.selectByClusters(task.getClusters()).nextRemoteChannelData();
 
                 ResponseMessage response = new ResponseMessage();
-                response.setMsgSource(MessageSource.AvatarMQBroker);
-                response.setMsgType(MessageType.AvatarMQMessage);
+                response.setMsgType(MessageType.Message);
                 response.setMsgParams(msg);
                 response.setMsgId(new MessageIdGenerator().generate());
 

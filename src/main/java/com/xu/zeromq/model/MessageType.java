@@ -2,15 +2,19 @@ package com.xu.zeromq.model;
 
 public enum MessageType {
 
-    AvatarMQSubscribe(1),
+    Subscribe(1),
 
-    AvatarMQUnsubscribe(2),
+    SubscribeAck(2),
 
-    AvatarMQMessage(3),
+    Unsubscribe(3),
 
-    AvatarMQProducerAck(4),
+    UnsubscribeAck(4),
 
-    AvatarMQConsumerAck(5);
+    Message(5),
+
+    ProducerAck(6),
+
+    ConsumerAck(7);
 
     private int messageType;
 
@@ -21,4 +25,5 @@ public enum MessageType {
     int getMessageType() {
         return messageType;
     }
+
 }

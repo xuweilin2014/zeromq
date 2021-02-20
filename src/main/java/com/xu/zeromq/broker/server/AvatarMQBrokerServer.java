@@ -1,9 +1,7 @@
 package com.xu.zeromq.broker.server;
 
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
-import com.xu.zeromq.broker.ConsumerMessageHook;
-import com.xu.zeromq.broker.MessageBrokerHandler;
-import com.xu.zeromq.broker.ProducerMessageHook;
+import com.xu.zeromq.broker.BrokerHandler;
 import com.xu.zeromq.core.MessageSystemConfig;
 import com.xu.zeromq.netty.MessageObjectDecoder;
 import com.xu.zeromq.netty.MessageObjectEncoder;
@@ -45,7 +43,7 @@ public class AvatarMQBrokerServer extends BrokerParallelServer implements Remoti
 
     private int brokerServerPort = 0;
     private ServerBootstrap bootstrap;
-    private MessageBrokerHandler handler;
+    private BrokerHandler handler;
     private SocketAddress serverIpAddr;
     private NettyClustersConfig nettyClustersConfig = new NettyClustersConfig();
     private DefaultEventExecutorGroup defaultEventExecutorGroup;
@@ -62,7 +60,7 @@ public class AvatarMQBrokerServer extends BrokerParallelServer implements Remoti
 
     public void init() {
         try {
-            handler = new MessageBrokerHandler().buildConsumerHook(new ConsumerMessageHook()).buildProducerHook(new ProducerMessageHook());
+            handler = new BrokerHandler();
 
             boss = new NioEventLoopGroup(1, threadBossFactory);
             workers = new NioEventLoopGroup(parallel, threadWorkerFactory, NettyUtil.getNioSelectorProvider());

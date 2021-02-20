@@ -6,7 +6,7 @@ import java.util.List;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 
-public class CallBackInvoker<T> {
+public class CallBackFuture<T> {
 
     private final CountDownLatch countDownLatch = new CountDownLatch(1);
 
@@ -32,7 +32,7 @@ public class CallBackInvoker<T> {
         this.requestId = requestId;
     }
 
-    public CallBackInvoker() {
+    public CallBackFuture() {
     }
 
     public void setMessageResult(T messageResult) {

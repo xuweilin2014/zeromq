@@ -1,7 +1,7 @@
 package com.xu.zeromq.netty;
 
 import com.xu.zeromq.msg.ProducerAckMessage;
-import com.xu.zeromq.core.CallBackInvoker;
+import com.xu.zeromq.core.CallBackFuture;
 import com.xu.zeromq.core.CallBackListener;
 import com.xu.zeromq.core.NotifyCallback;
 import com.xu.zeromq.model.RequestMessage;
@@ -44,14 +44,14 @@ public class MessageProcessor {
             return;
         }
 
-        Map<String, CallBackInvoker<Object>> callBackMap = factory.getCallBackMap();
-        final CallBackInvoker<Object> invoker = new CallBackInvoker<Object>();
-        callBackMap.put(request.getMsgId(), invoker);
-        invoker.setRequestId(request.getMsgId());
+        Map<String, CallBackFuture<Object>> futureMap = factory.getFutureMap();
+        final CallBackFuture<Object> callBackFuture = new CallBackFuture<Object>();
+        futureMap.put(request.getMsgId(), callBackFuture);
+        callBackFuture.setRequestId(request.getMsgId());
 
         // 将 CallBackListener 保存到 CallBackInvoker 中的 listeners 集合中，等到有结果之后，就会对 listeners
         // 中的 listener 进行回调
-        invoker.join(new CallBackListener<Object>() {
+        callBackFuture.join(new CallBackListener<Object>() {
             public void onCallBack(Object t, Throwable reason) {
                 ResponseMessage response = (ResponseMessage) t;
                 // 如果 reason 不为 null，就表明发生了异常，需要进行处理
@@ -69,7 +69,7 @@ public class MessageProcessor {
         channelFuture.addListener(new ChannelFutureListener() {
             public void operationComplete(ChannelFuture future) {
                 if (!future.isSuccess()) {
-                    invoker.setReason(future.cause());
+                    callBackFuture.setReason(future.cause());
                 }
             }
         });
@@ -85,25 +85,26 @@ public class MessageProcessor {
             return null;
         }
 
-        Map<String, CallBackInvoker<Object>> callBackMap = factory.getCallBackMap();
-        final CallBackInvoker<Object> invoker = new CallBackInvoker<>();
+        Map<String, CallBackFuture<Object>> futureMap = factory.getFutureMap();
+        final CallBackFuture<Object> callBackFuture = new CallBackFuture<>();
         // request 中的 msgId 其实就是消息 id
-        // 消息 id 和 CallBackInvoker 一一对应，一起保存在 MessageConnectFactory 的 callBackMap 中
-        callBackMap.put(request.getMsgId(), invoker);
-        invoker.setRequestId(request.getMsgId());
+        // 消息 id 和 callBackFuture 一一对应，一起保存在 MessageConnectFactory 的 futureMap 中
+        futureMap.put(request.getMsgId(), callBackFuture);
+        callBackFuture.setRequestId(request.getMsgId());
 
         ChannelFuture channelFuture = channel.writeAndFlush(request);
         channelFuture.addListener(new ChannelFutureListener() {
             public void operationComplete(ChannelFuture future) {
                 if (!future.isSuccess()) {
-                    invoker.setReason(future.cause());
+                    callBackFuture.setReason(future.cause());
                 }
             }
         });
 
         try {
-            Object result = invoker.getMessageResult(factory.getTimeOut(), TimeUnit.MILLISECONDS);
-            callBackMap.remove(request.getMsgId());
+            // 阻塞等待 broker 的响应
+            Object result = callBackFuture.getMessageResult(factory.getTimeOut(), TimeUnit.MILLISECONDS);
+            futureMap.remove(request.getMsgId());
             return result;
         } catch (RuntimeException e) {
             logger.warn(e.getMessage());
@@ -119,10 +120,10 @@ public class MessageProcessor {
             return;
         }
 
-        Map<String, CallBackInvoker<Object>> callBackMap = factory.getCallBackMap();
-        final CallBackInvoker<Object> invoker = new CallBackInvoker<Object>();
-        callBackMap.put(request.getMsgId(), invoker);
-        invoker.setRequestId(request.getMsgId());
+        Map<String, CallBackFuture<Object>> futureMap = factory.getFutureMap();
+        final CallBackFuture<Object> callBackFuture = new CallBackFuture<Object>();
+        futureMap.put(request.getMsgId(), callBackFuture);
+        callBackFuture.setRequestId(request.getMsgId());
 
         ChannelFuture channelFuture;
         try {
@@ -130,7 +131,7 @@ public class MessageProcessor {
             channelFuture.addListener(new ChannelFutureListener() {
                 public void operationComplete(ChannelFuture future) {
                     if (!future.isSuccess()) {
-                        invoker.setReason(future.cause());
+                        callBackFuture.setReason(future.cause());
                     }
                 }
             });

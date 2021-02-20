@@ -1,6 +1,6 @@
 package com.xu.zeromq.broker;
 
-import com.xu.zeromq.core.CallBackInvoker;
+import com.xu.zeromq.core.CallBackFuture;
 import com.xu.zeromq.core.MessageSystemConfig;
 import com.xu.zeromq.model.ResponseMessage;
 import io.netty.channel.Channel;
@@ -13,7 +13,7 @@ public class SendMessageLauncher {
 
     private long timeout = MessageSystemConfig.MessageTimeOutValue;
 
-    public Map<String, CallBackInvoker<Object>> invokeMap = new ConcurrentSkipListMap<String, CallBackInvoker<Object>>();
+    public Map<String, CallBackFuture<Object>> invokeMap = new ConcurrentSkipListMap<String, CallBackFuture<Object>>();
 
     private SendMessageLauncher() {
     }
@@ -33,7 +33,7 @@ public class SendMessageLauncher {
 
     public Object launcher(Channel channel, ResponseMessage response) {
         if (channel != null) {
-            CallBackInvoker<Object> invoker = new CallBackInvoker<Object>();
+            CallBackFuture<Object> invoker = new CallBackFuture<Object>();
             invokeMap.put(response.getMsgId(), invoker);
             invoker.setRequestId(response.getMsgId());
             ChannelFuture channelFuture = channel.writeAndFlush(response);
@@ -55,7 +55,7 @@ public class SendMessageLauncher {
         return invokeMap.containsKey(key);
     }
 
-    public CallBackInvoker<Object> detach(String key) {
+    public CallBackFuture<Object> detach(String key) {
         if (invokeMap.containsKey(key)) {
             return invokeMap.remove(key);
         } else {

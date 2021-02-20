@@ -2,7 +2,7 @@ package com.xu.zeromq.netty;
 
 import com.google.common.base.Preconditions;
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
-import com.xu.zeromq.core.CallBackInvoker;
+import com.xu.zeromq.core.CallBackFuture;
 import com.xu.zeromq.core.MessageSystemConfig;
 import com.xu.zeromq.serialize.KryoCodecUtil;
 import com.xu.zeromq.serialize.KryoPoolFactory;
@@ -34,7 +34,7 @@ public class MessageConnectFactory {
 
     private ChannelInboundHandlerAdapter messageHandler = null;
     // <msgId, CallBackInvoker>
-    private Map<String, CallBackInvoker<Object>> callBackMap = new ConcurrentHashMap<String, CallBackInvoker<Object>>();
+    private Map<String, CallBackFuture<Object>> futureMap = new ConcurrentHashMap<>();
 
     private Bootstrap bootstrap = null;
 
@@ -135,12 +135,12 @@ public class MessageConnectFactory {
         if (key == null) {
             return false;
         }
-        return getCallBackMap().containsKey(key);
+        return getFutureMap().containsKey(key);
     }
 
-    public CallBackInvoker<Object> detachInvoker(String key) {
+    public CallBackFuture<Object> detachInvoker(String key) {
         if (traceInvoker(key)) {
-            return getCallBackMap().remove(key);
+            return getFutureMap().remove(key);
         } else {
             return null;
         }
@@ -158,11 +158,11 @@ public class MessageConnectFactory {
         return messageChannel;
     }
 
-    public Map<String, CallBackInvoker<Object>> getCallBackMap() {
-        return callBackMap;
+    public Map<String, CallBackFuture<Object>> getFutureMap() {
+        return futureMap;
     }
 
-    public void setCallBackMap(Map<String, CallBackInvoker<Object>> callBackMap) {
-        this.callBackMap = callBackMap;
+    public void setFutureMap(Map<String, CallBackFuture<Object>> callBackMap) {
+        this.futureMap = callBackMap;
     }
 }

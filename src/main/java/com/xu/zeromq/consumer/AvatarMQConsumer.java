@@ -31,6 +31,9 @@ public class AvatarMQConsumer extends MessageProcessor implements AvatarMQAction
     private String consumerId = "";
 
     public AvatarMQConsumer(String brokerServerAddress, String topic, ProducerMessageHook hook) {
+        // 在父类的 MessageProcessor 中，会获取到一个 MessageConnectFactory 对象，用于和 broker 建立连接
+        // 每个 consumer 都有一个 MessageConnectFactory 对象作为属性。在 MessageConnectFactory 中，
+        // 还有一个 futureMap，用来保存已经发送的 subscribe 请求（还没有收到响应）
         super(brokerServerAddress);
         this.hook = hook;
         this.brokerServerAddress = brokerServerAddress;
@@ -40,7 +43,7 @@ public class AvatarMQConsumer extends MessageProcessor implements AvatarMQAction
 
     private void unRegister() {
         RequestMessage request = new RequestMessage();
-        request.setMsgType(MessageType.AvatarMQUnsubscribe);
+        request.setMsgType(MessageType.Unsubscribe);
         request.setMsgId(new MessageIdGenerator().generate());
         request.setMsgParams(new UnSubscribeMessage(consumerId));
         sendSyncMessage(request);
@@ -52,11 +55,13 @@ public class AvatarMQConsumer extends MessageProcessor implements AvatarMQAction
     // 发送消息到 broker 端，表明此 consumer 订阅的主题以及 consumerId 和 clusterId
     private void register() {
         // 发送或者接收到的 broker 消息分为两种：RequestMessage 以及 ResponseMessage
+        // RequestMessage 中只有 msgId
         RequestMessage request = new RequestMessage();
         // 发送的消息类型为订阅消息
-        request.setMsgType(MessageType.AvatarMQSubscribe);
+        request.setMsgType(MessageType.Subscribe);
         request.setMsgId(new MessageIdGenerator().generate());
 
+        // SubscriptMessage 中则有 clusterId 以及 consumerId
         SubscribeMessage subscript = new SubscribeMessage();
         subscript.setClusterId((clusterId.equals("") ? defaultClusterId : clusterId));
         subscript.setTopic(topic);
@@ -64,12 +69,14 @@ public class AvatarMQConsumer extends MessageProcessor implements AvatarMQAction
 
         request.setMsgParams(subscript);
 
+        // 异步发送 subscribe 请求给 broker，然后阻塞等待 broker 端的响应
+        // 在作者的实现中，似乎发送了 Subscribe 请求之后，broker 返回的 SubscribeAck 响应被无视了，直接等待阻塞超时
         sendAsyncMessage(request);
     }
 
     public void init() {
         // ConsumerHookMessage 用来调用用户自己定义的 hook 对象对消息进行处理，然后返回 ConsumerAckMessage
-        super.getMessageConnectFactory().setMessageHandler(new MessageConsumerHandler(this, new ConsumerHookMessageEvent(hook)));
+        super.getMessageConnectFactory().setMessageHandler(new ConsumerHandler(this, new ConsumerHookMessageEvent(hook)));
         Joiner joiner = Joiner.on(MessageSystemConfig.MessageDelimiter).skipNulls();
         // 消费者集群 id（clusterId） + @ + topic + @ + msgId
         consumerId = joiner.join((clusterId.equals("") ? defaultClusterId : clusterId), topic, new MessageIdGenerator().generate());

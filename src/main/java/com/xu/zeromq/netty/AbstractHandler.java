@@ -6,23 +6,23 @@ import io.netty.channel.ChannelInboundHandlerAdapter;
 import org.springframework.aop.framework.ProxyFactory;
 import org.springframework.aop.support.NameMatchMethodPointcutAdvisor;
 
-public class MessageEventWrapper<T> extends ChannelInboundHandlerAdapter implements MessageEventHandler, MessageEventProxy {
+public abstract class AbstractHandler<T> extends ChannelInboundHandlerAdapter implements MessageEventHandler, MessageEventProxy {
 
     final public static String proxyMappedName = "handleMessage";
     protected MessageProcessor processor;
     protected Throwable cause;
     protected HookMessageEvent<T> hook;
     protected MessageConnectFactory factory;
-    private MessageEventWrapper<T> wrapper;
+    private AbstractHandler<T> wrapper;
 
-    public MessageEventWrapper() {
+    public AbstractHandler() {
     }
 
-    public MessageEventWrapper(MessageProcessor processor) {
+    public AbstractHandler(MessageProcessor processor) {
         this(processor, null);
     }
 
-    public MessageEventWrapper(MessageProcessor processor, HookMessageEvent<T> hook) {
+    public AbstractHandler(MessageProcessor processor, HookMessageEvent<T> hook) {
         this.processor = processor;
         this.hook = hook;
         this.factory = processor.getMessageConnectFactory();
@@ -57,7 +57,7 @@ public class MessageEventWrapper<T> extends ChannelInboundHandlerAdapter impleme
         ProxyFactory weaver = new ProxyFactory(wrapper);
         NameMatchMethodPointcutAdvisor advisor = new NameMatchMethodPointcutAdvisor();
         // 2.指定要拦截的具体方法名称
-        advisor.setMappedName(MessageEventWrapper.proxyMappedName);
+        advisor.setMappedName(AbstractHandler.proxyMappedName);
         // 3.前置增强和后置增强可以通过下面的环绕增强统一进行处理
         advisor.setAdvice(new MessageEventAdvisor(wrapper, msg));
         weaver.addAdvisor(advisor);
@@ -83,7 +83,7 @@ public class MessageEventWrapper<T> extends ChannelInboundHandlerAdapter impleme
         return cause;
     }
 
-    public void setWrapper(MessageEventWrapper<T> wrapper) {
+    public void setWrapper(AbstractHandler<T> wrapper) {
         this.wrapper = wrapper;
     }
 }

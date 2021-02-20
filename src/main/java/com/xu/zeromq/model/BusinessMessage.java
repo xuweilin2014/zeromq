@@ -6,10 +6,13 @@ import java.io.Serializable;
 public abstract class BusinessMessage implements Serializable {
 
     public final static int SUCCESS = 0;
+
     public final static int FAIL = 1;
+
     protected String msgId;
+
     protected BaseMessage msgParams;
-    protected MessageSource msgSource;
+
     protected MessageType msgType;
 
     public String getMsgId() {
@@ -26,14 +29,6 @@ public abstract class BusinessMessage implements Serializable {
 
     public void setMsgParams(BaseMessage msgParams) {
         this.msgParams = msgParams;
-    }
-
-    public MessageSource getMsgSource() {
-        return msgSource;
-    }
-
-    public void setMsgSource(MessageSource msgSource) {
-        this.msgSource = msgSource;
     }
 
     public MessageType getMsgType() {
