@@ -1,11 +1,11 @@
 package com.xu.zeromq.test;
 
-import com.xu.zeromq.consumer.AvatarMQConsumer;
+import com.xu.zeromq.consumer.ZeroMQConsumer;
 import com.xu.zeromq.consumer.ProducerMessageHook;
 import com.xu.zeromq.msg.ConsumerAckMessage;
 import com.xu.zeromq.msg.Message;
 
-public class AvatarMQConsumer2 {
+public class ZeroMQConsumer2 {
 
     private static ProducerMessageHook hook = new ProducerMessageHook() {
         public ConsumerAckMessage hookMessage(Message message) {
@@ -17,10 +17,8 @@ public class AvatarMQConsumer2 {
     };
 
     public static void main(String[] args) {
-        AvatarMQConsumer consumer = new AvatarMQConsumer("127.0.0.1:18888", "AvatarMQ-Topic-2", hook);
-        consumer.init();
+        ZeroMQConsumer consumer = new ZeroMQConsumer("127.0.0.1:18888", "AvatarMQ-Topic-2", hook);
         consumer.setClusterId("AvatarMQCluster2");
-        consumer.receiveMode();
         consumer.start();
     }
 }

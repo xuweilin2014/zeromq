@@ -26,11 +26,11 @@ public class NettyUtil {
     private static boolean isWindows = false;
 
     static {
-        if (osName != null && osName.toLowerCase().indexOf("linux") >= 0) {
+        if (osName != null && osName.toLowerCase().contains("linux")) {
             isLinux = true;
         }
 
-        if (osName != null && osName.toLowerCase().indexOf("windows") >= 0) {
+        if (osName != null && osName.toLowerCase().contains("windows")) {
             isWindows = true;
         }
     }

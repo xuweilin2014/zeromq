@@ -1,10 +1,8 @@
 package com.xu.zeromq.core;
 
-public interface AvatarMQAction {
+public interface ZeroMQAction {
 
     void start();
-
-    void init();
 
     void shutdown();
 }

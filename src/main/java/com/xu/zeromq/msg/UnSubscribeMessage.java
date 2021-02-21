@@ -6,8 +6,11 @@ public class UnSubscribeMessage extends BaseMessage implements Serializable {
 
     private String consumerId;
 
-    public UnSubscribeMessage(String consumerId) {
+    private String clusterId;
+
+    public UnSubscribeMessage(String consumerId, String clusterId) {
         this.consumerId = consumerId;
+        this.clusterId = clusterId;
     }
 
     public String getConsumerId() {
@@ -16,5 +19,13 @@ public class UnSubscribeMessage extends BaseMessage implements Serializable {
 
     public void setConsumerId(String consumerId) {
         this.consumerId = consumerId;
+    }
+
+    public String getClusterId() {
+        return clusterId;
+    }
+
+    public void setClusterId(String clusterId) {
+        this.clusterId = clusterId;
     }
 }

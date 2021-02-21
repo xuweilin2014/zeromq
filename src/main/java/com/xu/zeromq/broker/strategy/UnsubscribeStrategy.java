@@ -6,15 +6,15 @@ import com.xu.zeromq.model.ResponseMessage;
 import com.xu.zeromq.msg.UnSubscribeMessage;
 import io.netty.channel.ChannelHandlerContext;
 
-public class BrokerUnsubscribeStrategy implements BrokerStrategy {
+public class UnsubscribeStrategy implements Strategy {
 
-    public BrokerUnsubscribeStrategy() {
+    public UnsubscribeStrategy() {
     }
 
     public void messageDispatch(RequestMessage request, ResponseMessage response) {
-        UnSubscribeMessage msgUnSubscribe = (UnSubscribeMessage) request.getMsgParams();
+        UnSubscribeMessage unsubscribe  = (UnSubscribeMessage) request.getMsgParams();
         // 从 broker 服务器端删除掉这个 consumer 的订阅内容
-        ConsumerContext.unLoad(msgUnSubscribe.getConsumerId());
+        ConsumerContext.unLoad(unsubscribe.getConsumerId(), unsubscribe.getClusterId());
     }
 
     public void setChannelHandler(ChannelHandlerContext channelHandler) {

@@ -53,7 +53,7 @@ public class CallBackFuture<T> {
         return messageResult;
     }
 
-    public void join(CallBackListener<T> listener) {
+    public void addListener(CallBackListener<T> listener) {
         this.listeners.add(listener);
     }
 

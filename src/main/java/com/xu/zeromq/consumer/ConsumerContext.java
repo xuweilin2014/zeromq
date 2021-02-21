@@ -7,6 +7,8 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CopyOnWriteArrayList;
+
+import com.xu.zeromq.msg.SubscribeAckMessage;
 import org.apache.commons.collections.Predicate;
 import org.apache.commons.collections.iterators.FilterIterator;
 
@@ -43,11 +45,11 @@ public class ConsumerContext {
     }
 
     // 根据消费者集群编码 cluster_id 查找一个消费者集群
-    public static ConsumerClusters selectByClusters(final String clusters) {
+    public static ConsumerCluster selectByClusterId(final String clusterId) {
         Predicate predicate = new Predicate() {
             public boolean evaluate(Object object) {
-                String id = ((ClustersRelation) object).getId();
-                return id.compareTo(clusters) == 0;
+                String id = ((ClustersRelation) object).getClusterId();
+                return id.compareTo(clusterId) == 0;
             }
         };
 
@@ -60,20 +62,21 @@ public class ConsumerContext {
             break;
         }
 
-        return (relation != null) ? relation.getClusters() : null;
+        return (relation != null) ? relation.getCluster() : null;
     }
 
     // 查找一下关注这个主题的消费者集群集合
-    public static List<ConsumerClusters> selectByTopic(String topic) {
+    public static List<ConsumerCluster> selectByTopic(String topic) {
 
-        List<ConsumerClusters> clusters = new ArrayList<>();
+        List<ConsumerCluster> clusters = new ArrayList<>();
 
+        // 遍历所有的消费者集群所订阅的主题信息
         for (int i = 0; i < relationArray.size(); i++) {
             // subscriptionTable 保存了某一个消费者集群所关注的所有主题
-            ConcurrentHashMap<String, SubscriptionData> subscriptionTable = relationArray.get(i).getClusters().getSubMap();
+            ConcurrentHashMap<String, SubscriptionData> subscriptionTable = relationArray.get(i).getCluster().getSubMap();
             // 如果当前这个消费者集群关注了这个主题，那么就将其加入到 clusters 数组中返回
             if (subscriptionTable.containsKey(topic)) {
-                clusters.add(relationArray.get(i).getClusters());
+                clusters.add(relationArray.get(i).getCluster());
             }
         }
 
@@ -81,47 +84,63 @@ public class ConsumerContext {
     }
 
     // 添加消费者集群
-    public static void addClusters(String clusters, RemoteChannelData channelinfo) {
-        // 这里的 clusters 可以看成是 cluster_id，也就是消费者集群的标识
-        ConsumerClusters manage = selectByClusters(clusters);
-        // 如果没有 cluster_id 对应的消费者集群
-        if (manage == null) {
-            ConsumerClusters newClusters = new ConsumerClusters(clusters);
-            newClusters.attachRemoteChannelData(channelinfo.getClientId(), channelinfo);
-            relationArray.add(new ClustersRelation(clusters, newClusters));
-        // 如果在消费者集群中找到了 clientId 对应的消费者
-        } else if (manage.findRemoteChannelData(channelinfo.getClientId()) != null) {
-            manage.detachRemoteChannelData(channelinfo.getClientId());
-            manage.attachRemoteChannelData(channelinfo.getClientId(), channelinfo);
-        // 如果在消费者集群中没有找到 clientId 对应的消费者
+    public static SubscribeAckMessage addClusters(String clusterId, RemoteChannelData channelinfo, String msgId) {
+
+        SubscribeAckMessage ack = new SubscribeAckMessage();
+        ack.setMsgId(msgId);
+
+        // clusterId，也就是消费者集群的标识
+        ConsumerCluster cluster = selectByClusterId(clusterId);
+        // 如果没有 clusterId 对应的消费者集群
+        if (cluster == null) {
+            ConsumerCluster newCluster = new ConsumerCluster(clusterId);
+            newCluster.attachRemoteChannelData(channelinfo.getConsumerId(), channelinfo);
+            relationArray.add(new ClustersRelation(clusterId, newCluster));
+        // 如果在消费者集群中找到了 consumerId 对应的消费者
+        } else if (cluster.findRemoteChannelData(channelinfo.getConsumerId()) != null) {
+            // 删除旧连接，添加新连接
+            cluster.detachRemoteChannelData(channelinfo.getConsumerId());
+            cluster.attachRemoteChannelData(channelinfo.getConsumerId(), channelinfo);
+        // 如果在消费者集群中没有找到 consumerId 对应的消费者
         } else {
             String topic = channelinfo.getSubscript().getTopic();
-            boolean touchChannel = manage.getSubMap().containsKey(topic);
-            if (touchChannel) {
-                manage.attachRemoteChannelData(channelinfo.getClientId(), channelinfo);
+            // 判断当前消费者集群中是否含有当前这个消费者订阅主题 topic
+            boolean contained = cluster.getSubMap().containsKey(topic);
+            if (contained) {
+                cluster.attachRemoteChannelData(channelinfo.getConsumerId(), channelinfo);
             } else {
-                manage.getSubMap().clear();
-                manage.getChannelMap().clear();
-                manage.attachRemoteChannelData(channelinfo.getClientId(), channelinfo);
+                // 一个消费者集群中所有消费者订阅主题应该是一致的，所以当不一致时，应该抛出异常
+                ack.setAck("consumer cluster " + clusterId + " does not contain the topic" + channelinfo.getSubscript().getTopic());
+                ack.setStatus(SubscribeAckMessage.FAIL);
+                return ack;
             }
         }
+
+        ack.setStatus(SubscribeAckMessage.SUCCESS);
+        ack.setAck("consumer " + channelinfo.getConsumerId() + " subscribe topic " + channelinfo.getSubscript().getTopic() + " successfully!");
+        return ack;
     }
 
     // 从一个消费者集群中删除一个消费者
-    public static void unLoad(String clientId) {
+    public static void unLoad(String clientId, String clusterId) {
+        if (clusterId == null || clusterId.length() == 0)
+            return;
+
         // 遍历 relationArray 中的每一个 ConsumerClusters 对象
         for (int i = 0; i < relationArray.size(); i++) {
-            String id = relationArray.get(i).getId();
-            ConsumerClusters manage = relationArray.get(i).getClusters();
+            String id = relationArray.get(i).getClusterId();
+
+            if (!clusterId.equals(id))
+                continue;
+
+            ConsumerCluster cluster = relationArray.get(i).getCluster();
 
             // 查看 ConsumerClusters 是否包含 client_id 这个消费者，如果包含，则移除
-            if (manage.findRemoteChannelData(clientId) != null) {
-                manage.detachRemoteChannelData(clientId);
+            if (cluster.findRemoteChannelData(clientId) != null) {
+                cluster.detachRemoteChannelData(clientId);
             }
 
-            if (manage.getChannelMap().size() == 0) {
-                ClustersRelation relation = new ClustersRelation();
-                relation.setId(id);
+            if (cluster.getChannelMap().size() == 0) {
                 relationArray.remove(id);
             }
         }

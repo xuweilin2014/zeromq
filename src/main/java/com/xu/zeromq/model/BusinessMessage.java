@@ -5,10 +5,6 @@ import java.io.Serializable;
 
 public abstract class BusinessMessage implements Serializable {
 
-    public final static int SUCCESS = 0;
-
-    public final static int FAIL = 1;
-
     protected String msgId;
 
     protected BaseMessage msgParams;

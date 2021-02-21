@@ -4,39 +4,39 @@ import org.apache.commons.lang3.builder.EqualsBuilder;
 
 public class ClustersRelation {
 
-    private String id;
+    private String clusterId;
 
-    private ConsumerClusters clusters;
+    private ConsumerCluster cluster;
 
     ClustersRelation() {
     }
 
-    ClustersRelation(String id, ConsumerClusters clusters) {
-        this.clusters = clusters;
-        this.id = id;
+    ClustersRelation(String clusterId, ConsumerCluster cluster) {
+        this.cluster = cluster;
+        this.clusterId = clusterId;
     }
 
-    public ConsumerClusters getClusters() {
-        return clusters;
+    public ConsumerCluster getCluster() {
+        return cluster;
     }
 
-    public void setClusters(ConsumerClusters clusters) {
-        this.clusters = clusters;
+    public void setCluster(ConsumerCluster cluster) {
+        this.cluster = cluster;
     }
 
-    public String getId() {
-        return id;
+    public String getClusterId() {
+        return clusterId;
     }
 
-    public void setId(String id) {
-        this.id = id;
+    public void setClusterId(String clusterId) {
+        this.clusterId = clusterId;
     }
 
     public boolean equals(Object obj) {
         boolean result = false;
         if (obj != null && ClustersRelation.class.isAssignableFrom(obj.getClass())) {
             ClustersRelation clusters = (ClustersRelation) obj;
-            result = new EqualsBuilder().append(id, clusters.getId()).isEquals();
+            result = new EqualsBuilder().append(clusterId, clusters.getClusterId()).isEquals();
         }
         return result;
     }

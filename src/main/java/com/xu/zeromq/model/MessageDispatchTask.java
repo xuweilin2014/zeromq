@@ -6,18 +6,18 @@ import org.apache.commons.lang3.builder.EqualsBuilder;
 
 public class MessageDispatchTask implements Serializable {
 
-    private String clusters;
+    private String clusterId;
 
     private String topic;
 
     private Message message;
 
-    public String getClusters() {
-        return clusters;
+    public String getClusterId() {
+        return clusterId;
     }
 
-    public void setClusters(String clusters) {
-        this.clusters = clusters;
+    public void setClusterId(String clusterId) {
+        this.clusterId = clusterId;
     }
 
     public String getTopic() {
@@ -40,7 +40,7 @@ public class MessageDispatchTask implements Serializable {
         boolean result = false;
         if (obj != null && MessageDispatchTask.class.isAssignableFrom(obj.getClass())) {
             MessageDispatchTask task = (MessageDispatchTask) obj;
-            result = new EqualsBuilder().append(clusters, task.getClusters()).append(topic, task.getTopic()).append(message, task.getMessage()).isEquals();
+            result = new EqualsBuilder().append(clusterId, task.getClusterId()).append(topic, task.getTopic()).append(message, task.getMessage()).isEquals();
         }
         return result;
     }

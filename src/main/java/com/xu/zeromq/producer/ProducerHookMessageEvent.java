@@ -5,6 +5,7 @@ import com.xu.zeromq.core.HookMessageEvent;
 public class ProducerHookMessageEvent extends HookMessageEvent<String> {
 
     private boolean brokerConnect = false;
+
     private boolean running = false;
 
     public ProducerHookMessageEvent() {

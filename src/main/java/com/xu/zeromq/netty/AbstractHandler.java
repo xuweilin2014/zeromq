@@ -12,7 +12,7 @@ public abstract class AbstractHandler<T> extends ChannelInboundHandlerAdapter im
     protected MessageProcessor processor;
     protected Throwable cause;
     protected HookMessageEvent<T> hook;
-    protected MessageConnectFactory factory;
+    protected Connection connection;
     private AbstractHandler<T> wrapper;
 
     public AbstractHandler() {
@@ -25,7 +25,7 @@ public abstract class AbstractHandler<T> extends ChannelInboundHandlerAdapter im
     public AbstractHandler(MessageProcessor processor, HookMessageEvent<T> hook) {
         this.processor = processor;
         this.hook = hook;
-        this.factory = processor.getMessageConnectFactory();
+        this.connection = processor.getConnection();
     }
 
     public void handleMessage(ChannelHandlerContext ctx, Object msg) {

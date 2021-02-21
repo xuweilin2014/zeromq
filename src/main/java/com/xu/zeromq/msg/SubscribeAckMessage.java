@@ -2,7 +2,7 @@ package com.xu.zeromq.msg;
 
 import java.io.Serializable;
 
-public class ConsumerAckMessage extends BaseMessage implements Serializable {
+public class SubscribeAckMessage extends BaseMessage implements Serializable {
 
     private String ack;
 
@@ -33,5 +33,4 @@ public class ConsumerAckMessage extends BaseMessage implements Serializable {
     public void setMsgId(String msgId) {
         this.msgId = msgId;
     }
-
 }

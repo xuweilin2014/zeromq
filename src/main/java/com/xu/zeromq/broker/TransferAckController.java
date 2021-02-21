@@ -4,7 +4,7 @@ import com.xu.zeromq.core.AckMessageCache;
 import com.xu.zeromq.core.MessageSystemConfig;
 import java.util.concurrent.Callable;
 
-public class AckPushMessageController implements Callable<Void> {
+public class TransferAckController implements Callable<Void> {
 
     private volatile boolean stopped = false;
 

@@ -3,15 +3,15 @@ package com.xu.zeromq.spring;
 import org.springframework.context.support.AbstractApplicationContext;
 import org.springframework.context.support.ClassPathXmlApplicationContext;
 
-public class AvatarMQContainer implements Container {
+public class ZeroMQContainer implements Container {
 
     public static final String AvatarMQConfigFilePath = "classpath:zeromq-broker.xml";
 
-    private AvatarMQContext springContext;
+    private ZeroMQContext springContext;
 
     public void start() {
         AbstractApplicationContext context = new ClassPathXmlApplicationContext(AvatarMQConfigFilePath);
-        springContext = new AvatarMQContext(context);
+        springContext = new ZeroMQContext(context);
         context.start();
     }
 
@@ -22,7 +22,7 @@ public class AvatarMQContainer implements Container {
         }
     }
 
-    public AvatarMQContext getContext() {
+    public ZeroMQContext getContext() {
         return springContext;
     }
 }

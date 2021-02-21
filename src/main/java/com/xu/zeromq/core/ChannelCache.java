@@ -7,12 +7,11 @@ public class ChannelCache {
 
     private static ConcurrentHashMap<String, Channel> producerMap = new ConcurrentHashMap<String, Channel>();
 
-    public static void pushRequest(String requestId, Channel channel) {
-        producerMap.put(requestId, channel);
+    public static void pushRequest(String msgId, Channel channel) {
+        producerMap.put(msgId, channel);
     }
 
-    public static Channel findChannel(String requestId) {
-        Channel channel = producerMap.remove(requestId);
-        return channel;
+    public static Channel findChannel(String msgId) {
+        return producerMap.remove(msgId);
     }
 }

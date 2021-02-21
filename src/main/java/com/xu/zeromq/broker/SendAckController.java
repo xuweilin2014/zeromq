@@ -11,7 +11,7 @@ import com.xu.zeromq.netty.NettyUtil;
 import io.netty.channel.Channel;
 import java.util.concurrent.Callable;
 
-public class AckPullMessageController implements Callable<Void> {
+public class SendAckController implements Callable<Void> {
 
     private volatile boolean stopped = false;
 

@@ -7,13 +7,7 @@ import com.xu.zeromq.core.MessageSystemConfig;
 import com.xu.zeromq.serialize.KryoCodecUtil;
 import com.xu.zeromq.serialize.KryoPoolFactory;
 import io.netty.bootstrap.Bootstrap;
-import io.netty.channel.Channel;
-import io.netty.channel.ChannelFuture;
-import io.netty.channel.ChannelFutureListener;
-import io.netty.channel.ChannelInboundHandlerAdapter;
-import io.netty.channel.ChannelInitializer;
-import io.netty.channel.ChannelOption;
-import io.netty.channel.EventLoopGroup;
+import io.netty.channel.*;
 import io.netty.channel.nio.NioEventLoopGroup;
 import io.netty.channel.socket.SocketChannel;
 import io.netty.channel.socket.nio.NioSocketChannel;
@@ -26,21 +20,24 @@ import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ThreadFactory;
 
-public class MessageConnectFactory {
+// 表示从 consumer 或者 producer 到 broker 服务器建立的一条连接
+public class Connection {
 
-    public static final Logger logger = LoggerFactory.getLogger(MessageConnectFactory.class);
+    public static final Logger logger = LoggerFactory.getLogger(Connection.class);
     // broker 服务器的地址
     private SocketAddress remoteAddr = null;
 
     private ChannelInboundHandlerAdapter messageHandler = null;
-    // <msgId, CallBackInvoker>
+    // <msgId, CallBackFuture>，producer 和 consumer 在这条连接上发送的请求，这些请求还没有得到响应
     private Map<String, CallBackFuture<Object>> futureMap = new ConcurrentHashMap<>();
 
     private Bootstrap bootstrap = null;
 
     private long timeout = 10 * 1000;
 
-    private boolean connected = false;
+    private volatile boolean connected = false;
+
+    private volatile boolean closed = false;
 
     private EventLoopGroup eventLoopGroup = null;
 
@@ -57,7 +54,7 @@ public class MessageConnectFactory {
             .setDaemon(true)
             .build();
 
-    public MessageConnectFactory(String serverAddress) {
+    public Connection(String serverAddress) {
         // 初始化远程地址，也就是 Broker 服务器的地址
         String[] ipAddr = serverAddress.split(MessageSystemConfig.IpV4AddressDelimiter);
         if (ipAddr.length == 2) {
@@ -77,7 +74,7 @@ public class MessageConnectFactory {
             bootstrap = new Bootstrap();
             bootstrap.group(eventLoopGroup).channel(NioSocketChannel.class)
                     .handler(new ChannelInitializer<SocketChannel>() {
-                        public void initChannel(SocketChannel channel) throws Exception {
+                        public void initChannel(SocketChannel channel) {
                             channel.pipeline().addLast(defaultEventExecutorGroup);
                             channel.pipeline().addLast(new MessageObjectEncoder(util));
                             channel.pipeline().addLast(new MessageObjectDecoder(util));
@@ -115,11 +112,15 @@ public class MessageConnectFactory {
     }
 
     public void close() {
+        if (closed)
+            return;
+
         if (messageChannel != null) {
             try {
                 messageChannel.close().sync();
                 eventLoopGroup.shutdownGracefully();
                 defaultEventExecutorGroup.shutdownGracefully();
+                closed = true;
             } catch (InterruptedException e) {
                 logger.info(e.getMessage());
             }
@@ -130,7 +131,6 @@ public class MessageConnectFactory {
         return connected;
     }
 
-    // 查找在
     public boolean traceInvoker(String key) {
         if (key == null) {
             return false;
@@ -165,4 +165,9 @@ public class MessageConnectFactory {
     public void setFutureMap(Map<String, CallBackFuture<Object>> callBackMap) {
         this.futureMap = callBackMap;
     }
+
+    public boolean isClosed(){
+        return closed;
+    }
+
 }

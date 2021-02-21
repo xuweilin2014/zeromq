@@ -27,9 +27,9 @@ import io.netty.util.concurrent.DefaultEventExecutorGroup;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public class AvatarMQBrokerServer extends BrokerParallelServer implements RemotingServer {
+public class ZeroMQBrokerServer extends BrokerParallelServer implements RemotingServer {
 
-    public static final Logger logger = LoggerFactory.getLogger(AvatarMQBrokerServer.class);
+    public static final Logger logger = LoggerFactory.getLogger(ZeroMQBrokerServer.class);
 
     private ThreadFactory threadBossFactory = new ThreadFactoryBuilder()
             .setNameFormat("ZeroMQBroker[BossSelector]-%d")
@@ -50,7 +50,7 @@ public class AvatarMQBrokerServer extends BrokerParallelServer implements Remoti
     private EventLoopGroup boss;
     private EventLoopGroup workers;
 
-    public AvatarMQBrokerServer(String serverAddress) {
+    public ZeroMQBrokerServer(String serverAddress) {
         String[] ipAddr = serverAddress.split(MessageSystemConfig.IpV4AddressDelimiter);
 
         if (ipAddr.length == 2) {
@@ -87,8 +87,6 @@ public class AvatarMQBrokerServer extends BrokerParallelServer implements Remoti
                                     handler);
                          }
                      });
-            // 创建 executorService
-            super.init();
         } catch (IOException ex) {
             logger.warn(ex.getMessage());
         }

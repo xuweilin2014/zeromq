@@ -2,13 +2,13 @@ package com.xu.zeromq.test;
 
 import com.xu.zeromq.msg.Message;
 import com.xu.zeromq.msg.ProducerAckMessage;
-import com.xu.zeromq.producer.AvatarMQProducer;
+import com.xu.zeromq.producer.ZeroMQProducer;
 import org.apache.commons.lang3.StringUtils;
 
-public class AvatarMQProducer2 {
+public class ZeroMQProducer2 {
 
     public static void main(String[] args) throws InterruptedException {
-        AvatarMQProducer producer = new AvatarMQProducer("127.0.0.1:18888", "AvatarMQ-Topic-2");
+        ZeroMQProducer producer = new ZeroMQProducer("127.0.0.1:18888", "AvatarMQ-Topic-2");
         producer.setClusterId("AvatarMQCluster2");
         producer.init();
         producer.start();

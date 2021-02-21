@@ -1,8 +1,8 @@
 package com.xu.zeromq.spring;
 
 
-public class AvatarMQServerStartup {
+public class ZeroMQServerStartup {
     public static void main(String[] args) {
-        new AvatarMQContainer().start();
+        new ZeroMQContainer().start();
     }
 }

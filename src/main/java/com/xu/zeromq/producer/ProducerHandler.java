@@ -28,14 +28,14 @@ public class ProducerHandler extends AbstractHandler<String> {
     }
 
     public void handleMessage(ChannelHandlerContext ctx, Object msg) {
-        // 当接收到对方发送过来的响应时，先检查 CallBack 这个 map 中是否存在 CallBackInvoker，
-        // producer 每发送一次 msg 都会生成一个特定的 msgId，以及一个对应的 CallBackInvoker，
-        // 并且把这个 <msgId, CallBackInvoker> 映射保存到 MessageConnectFactory 中
-        if (!factory.traceInvoker(key)) {
+        // 当接收到对方发送过来的响应时，先检查 CallBackFuture 这个 map 中是否存在对应的 CallBackFuture，
+        // producer 每发送一次 msg 都会生成一个特定的 msgId，以及一个对应的 CallBackFuture，
+        // 并且把这个 <msgId, CallBackFuture> 映射保存到 MessageConnectFactory 中
+        if (!connection.traceInvoker(key)) {
             return;
         }
 
-        CallBackFuture<Object> future = factory.detachInvoker(key);
+        CallBackFuture<Object> future = connection.detachInvoker(key);
 
         if (future == null) {
             return;
@@ -44,7 +44,7 @@ public class ProducerHandler extends AbstractHandler<String> {
         // 如果发生了异常，那么就把这个异常保存到 CallBackFuture 中
         if (this.getCause() != null) {
             future.setReason(getCause());
-        // 把 broker 返回的 ack 消息保存到 CallBackFuture 中
+        // 把 broker 返回的 ack 消息保存到 CallBackFuture 中，唤醒阻塞等待响应的 producer 线程
         } else {
             future.setMessageResult(msg);
         }

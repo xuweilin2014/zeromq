@@ -1,5 +1,10 @@
 package com.xu.zeromq.consumer;
 
+import com.xu.zeromq.core.CallBackFuture;
+import com.xu.zeromq.msg.BaseMessage;
+import com.xu.zeromq.msg.Message;
+import com.xu.zeromq.msg.SubscribeAckMessage;
+import com.xu.zeromq.netty.Connection;
 import io.netty.channel.ChannelHandlerContext;
 import com.xu.zeromq.msg.ConsumerAckMessage;
 import com.xu.zeromq.model.RequestMessage;
@@ -8,9 +13,12 @@ import com.xu.zeromq.core.HookMessageEvent;
 import com.xu.zeromq.model.MessageType;
 import com.xu.zeromq.netty.AbstractHandler;
 import com.xu.zeromq.netty.MessageProcessor;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
-@SuppressWarnings("GrazieInspection")
 public class ConsumerHandler extends AbstractHandler<Object> {
+
+    public static final Logger logger = LoggerFactory.getLogger(ConsumerHandler.class);
 
     private String key;
 
@@ -29,24 +37,52 @@ public class ConsumerHandler extends AbstractHandler<Object> {
     }
 
     public void handleMessage(ChannelHandlerContext ctx, Object msg) {
-        // factory 中不包含 key 对应的 callBackFuture，并且用户定义的 hook 不为 null，才会使用 hook 来对 message 进行处理
-        // 这是因为，consumer 发送 subscribe message 到 broker 之后，会在 factory 中生成一个 <msgId, CallBackFuture>
-        // 映射关系，而 broker 在接收到 subscribe message 之后会返回一个 SubscribeAck，这个 ack 会直接被 consumer 忽略掉。
-        //
-        // 当 broker 发送 consumer 所订阅主题的消息过来时，才会进入 if 语句进行处理
-        if (!factory.traceInvoker(key) && hook != null) {
-            ResponseMessage message = (ResponseMessage) msg;
+
+        BaseMessage message = ((ResponseMessage) msg).getMsgParams();
+
+        // 如果是 broker 发送过来的 Message
+        if (message instanceof Message && hook != null) {
             // 获取用户定义的 hook 来对 message 进行处理，并且获取到处理的结果 ConsumerAckMessage
             ConsumerAckMessage result = (ConsumerAckMessage) hook.callBackMessage(message);
             // 获取到处理结果之后再发送给 broker 服务器
             if (result != null) {
                 RequestMessage request = new RequestMessage();
-                request.setMsgId(message.getMsgId());
+                request.setMsgId(((Message) message).getMsgId());
                 request.setMsgType(MessageType.ConsumerAck);
                 request.setMsgParams(result);
 
                 ctx.writeAndFlush(request);
             }
         }
+
+        // 如果是 broker 对 consumer 订阅消息的响应
+        if (message instanceof SubscribeAckMessage){
+            SubscribeAckMessage ackMessage = (SubscribeAckMessage) message;
+            Connection connection = processor.getConnection();
+            String msgId = ackMessage.getMsgId();
+            // 获取到阻塞的 CallBackFuture 对象
+            CallBackFuture<Object> future = connection.getFutureMap().get(msgId);
+
+            if (future == null){
+                logger.warn("request " + msgId + " is removed from the futureMap");
+                return;
+            }
+
+            if (this.getCause() != null){
+                logger.warn("error occurs and message is " + this.getCause().getMessage());
+                future.setReason(this.getCause());
+            // 如果订阅不成功的话，就打印相关信息，并且将异常设置到 future 中，唤醒阻塞的线程
+            } else if (ackMessage.getStatus() == SubscribeAckMessage.FAIL){
+                logger.warn(ackMessage.getAck());
+                future.setReason(new Throwable(ackMessage.getAck()));
+            // 如果订阅成功的话，打印信息，同样将结果设置到 future 中，唤醒阻塞的线程
+            }else {
+                logger.info(ackMessage.getAck());
+                future.setMessageResult(ackMessage.getAck());
+            }
+        }
+
     }
+
+
 }

@@ -33,10 +33,10 @@ public class SendMessageTask implements Callable<Void> {
         for (MessageDispatchTask task : tasks) {
             Message msg = task.getMessage();
 
-            if (ConsumerContext.selectByClusters(task.getClusters()) != null) {
+            if (ConsumerContext.selectByClusterId(task.getClusterId()) != null) {
                 // 根据 cluster_id 获取到对应的消费者集群，并且根据负载均衡策略，选择一个集群中的一个消费者
                 // 也就是一个消费集群如果订阅了某个主题的消息，那么一个相关主题的消息只会被发送到这个集群中的某一个 consumer 中
-                RemoteChannelData channel = ConsumerContext.selectByClusters(task.getClusters()).nextRemoteChannelData();
+                RemoteChannelData channel = ConsumerContext.selectByClusterId(task.getClusterId()).nextRemoteChannelData();
 
                 ResponseMessage response = new ResponseMessage();
                 response.setMsgType(MessageType.Message);
@@ -47,7 +47,7 @@ public class SendMessageTask implements Callable<Void> {
                     // 确认 channel 是否是 active，是否开启 open，以及是否可以写入
                     // 如果没有满足上述条件，则说明该消费者集群的网络条件出现故障
                     if (!NettyUtil.validateChannel(channel.getChannel())) {
-                        ConsumerContext.addClustersStat(task.getClusters(), ClustersState.NETWORKERR);
+                        ConsumerContext.addClustersStat(task.getClusterId(), ClustersState.NETWORKERR);
                         continue;
                     }
 
@@ -57,10 +57,10 @@ public class SendMessageTask implements Callable<Void> {
 
                     // 如果消费成功，会将消费者集群的状态设置为 success
                     if (result.getStatus() == ConsumerAckMessage.SUCCESS) {
-                        ConsumerContext.addClustersStat(task.getClusters(), ClustersState.SUCCESS);
+                        ConsumerContext.addClustersStat(task.getClusterId(), ClustersState.SUCCESS);
                     }
                 } catch (Exception e) {
-                    ConsumerContext.addClustersStat(task.getClusters(), ClustersState.ERROR);
+                    ConsumerContext.addClustersStat(task.getClusterId(), ClustersState.ERROR);
                 }
             }
         }
