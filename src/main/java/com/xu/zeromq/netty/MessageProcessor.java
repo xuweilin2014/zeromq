@@ -25,8 +25,8 @@ public class MessageProcessor {
 
     public MessageProcessor(String serverAddress) {
         this.address = serverAddress;
-        // pool 是一个对象池，用来保存和复用 MessageConnectFactory 对象，MessageConnectFactory 可以用来创建到 broker 服务器的连接
-        // 从对象池中获取一个 MessageConnectFactory 对象
+        // pool 是一个对象池，用来保存和复用 Connection 对象，Connection 表示到 broker 服务器的连接
+        // 从对象池中获取一个 Connection 对象
         this.connection = MessageConnectionPool.borrowConnection(serverAddress);
     }
 

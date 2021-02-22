@@ -51,9 +51,6 @@ public class ProducerHandler extends AbstractHandler<String> {
     }
 
     public void channelInactive(ChannelHandlerContext ctx) throws Exception {
-        if (hook != null) {
-            hook.disconnect(ctx.channel().remoteAddress().toString());
-        }
         super.channelInactive(ctx);
     }
 }

@@ -12,7 +12,7 @@ import com.xu.zeromq.netty.MessageProcessor;
 
 public class ZeroMQConsumer extends MessageProcessor implements ZeroMQAction {
 
-    // 有 consumer 自己定义的消息消费方法
+    // 由 consumer 自己定义的消息消费方法
     private ProducerMessageHook hook;
 
     private String brokerServerAddress;
@@ -81,6 +81,9 @@ public class ZeroMQConsumer extends MessageProcessor implements ZeroMQAction {
     }
 
     public void start() {
+        if (getConnection() == null || !getConnection().isConnected() || getConnection().isClosed()){
+            throw new RuntimeException("connection to " + brokerServerAddress + " is not established yet");
+        }
         // ConsumerHookMessage 用来调用用户自己定义的 hook 对象对消息进行处理，然后返回 ConsumerAckMessage
         super.getConnection().setMessageHandler(new ConsumerHandler(this, new ConsumerHookMessageEvent(hook)));
         Joiner joiner = Joiner.on(MessageSystemConfig.MessageDelimiter).skipNulls();
@@ -96,8 +99,9 @@ public class ZeroMQConsumer extends MessageProcessor implements ZeroMQAction {
 
     public void shutdown() {
         if (running) {
+            // 取消订阅主题
             unsubscribe();
-
+            // 关闭 consumer 并不真正关闭掉连接，而是将其归还到连接池中
             super.returnConnection();
             running = false;
         }

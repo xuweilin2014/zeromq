@@ -11,9 +11,7 @@ import java.util.concurrent.atomic.AtomicLong;
 
 public class ZeroMQProducer extends MessageProcessor implements ZeroMQAction {
 
-    private boolean brokerConnect = false;
-
-    private boolean running = false;
+    private volatile boolean running = false;
     // Broker 服务器的地址
     private String brokerServerAddress;
     // 要发送的主题名称
@@ -33,29 +31,27 @@ public class ZeroMQProducer extends MessageProcessor implements ZeroMQAction {
 
     // 连接到 broker 端
     public void start() {
+        if (getConnection() == null || !getConnection().isConnected() || getConnection().isClosed()){
+            throw new RuntimeException("connection to " + brokerServerAddress + " is not established yet");
+        }
+
+        // 设置 ProducerHandler，也就是 producer -> Broker 的连接 pipeline 中可以有这个 handler 来进行处理
+        super.getConnection().setMessageHandler(new ProducerHandler(this));
+
         // producer 连接到 broker 端
         super.getConnection().connect();
-        // 设置 producer 已经成功连接到 broker，并且处于运行状态
-        brokerConnect = true;
+        // 设置 producer 已经处于运行状态
         running = true;
-    }
-
-    // 设置 netty 参数，为连接到 broker 端做好准备
-    public void init() {
-        ProducerHookMessageEvent hook = new ProducerHookMessageEvent();
-        hook.setBrokerConnect(brokerConnect);
-        hook.setRunning(running);
-        // 设置 ProducerHandler，也就是 Producer -> Broker 的连接 pipeline 中可以有这个 handler 来进行处理
-        super.getConnection().setMessageHandler(new ProducerHandler(this, hook));
     }
 
     public ProducerAckMessage deliver(Message message) {
         // 如果 producer 不处于连接状态，那么就直接返回 ProducerAckMessage
-        if (!brokerConnect){
+        if (getConnection().isConnected() && !getConnection().isClosed()){
             ProducerAckMessage ack = new ProducerAckMessage();
             ack.setStatus(ProducerAckMessage.FAIL);
             return ack;
         }
+
         // 如果不处于 running 状态，则说明 producer 没有启动，因此直接返回 null
         if (!running){
             return null;

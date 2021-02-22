@@ -6,60 +6,56 @@ import org.apache.commons.pool2.impl.GenericKeyedObjectPool;
 import java.io.Closeable;
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.List;
 import java.util.Map;
 import java.util.Properties;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.CopyOnWriteArrayList;
 
 public class MessageConnectionPool implements Closeable {
 
-    private static GenericKeyedObjectPool<String, Connection> pool;
+    private volatile static GenericKeyedObjectPool<String, Connection> pool;
 
-    private static Map<String, PoolConfig> propertiesMap = new ConcurrentHashMap<>();
+    private static PoolConfig config;
 
-    public static final String poolPropertiesPath = "pool.properties";
+    private static List<String> addressList = new CopyOnWriteArrayList<>();
 
-    static {
-        ClassLoader cls = MessageConnectionPool.class.getClassLoader();
-        InputStream inputStream = cls.getResourceAsStream(poolPropertiesPath);
-        Properties poolProperties = new Properties();
-        try {
-            poolProperties.load(inputStream);
-            Set<String> addresses = poolProperties.stringPropertyNames();
-            for (String address : addresses) {
-                String path = (String) poolProperties.get(address);
-                InputStream is = cls.getResourceAsStream(path);
-                Properties properties = new Properties();
-                properties.load(is);
+    public static final String poolPropertiesPath = "zeromq.pool.properties";
 
-                PoolConfig poolConfig = new PoolConfig(properties);
-
-                propertiesMap.put(address, poolConfig);
-            }
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-    }
-
-    public static synchronized Connection borrowConnection(String address){
-        Connection connection = null;
+    // 从连接池中获取到对应地址的连接，如果没有的话，就先创建一些连接（默认为 8 个）放入到连接池中
+    public static Connection borrowConnection(String address){
+        Connection connection;
         try{
+            // pool 是单例，只能创建一个
             if (pool == null){
-                MessageConnectionFactory factory = new MessageConnectionFactory();
-                // 获取用户配置的到特定地址的连接池参数
-                PoolConfig poolConfig = propertiesMap.get(address);
+                synchronized (MessageConnectionPool.class){
+                    if (pool == null){
+                        // factory 是工厂，用来创建 connection
+                        MessageConnectionFactory factory = new MessageConnectionFactory();
+                        ClassLoader cls = MessageConnectionPool.class.getClassLoader();
+                        // zeromq.pool.properties 为连接池参数配置文件，可以在这个文件中配置 pool 的各个参数
+                        InputStream inputStream = cls.getResourceAsStream(poolPropertiesPath);
 
-                // 如果用户没有配置 address 对应的连接池参数，那么就使用默认的参数
-                if (poolConfig == null){
-                    poolConfig = new PoolConfig();
+                        Properties poolProperties = new Properties();
+                        poolProperties.load(inputStream);
+
+                        // 创建连接池参数配置对象 PoolConfig
+                        config = new PoolConfig(poolProperties);
+
+                        pool = new GenericKeyedObjectPool<>(factory, config);
+                    }
                 }
+            }
 
-                pool = new GenericKeyedObjectPool<>(factory, poolConfig);
-
-                // 初始化最大数量的连接加入连接池中
-                for (int i = 0; i < poolConfig.getMaxTotalPerKey(); i++) {
+            // 如果 addressList 中没有 address 对应的地址，就说明连接池中没有对应的地址，
+            // 因此会事先创建一部分连接保存到 pool 中
+            if (!addressList.contains(address) && config != null){
+                // 初始化最大数量的连接加入连接池中，默认为 8
+                for (int i = 0; i < config.getMaxTotalPerKey(); i++) {
                     pool.addObject(address);
                 }
+                addressList.add(address);
             }
 
             connection = pool.borrowObject(address);
@@ -72,6 +68,7 @@ public class MessageConnectionPool implements Closeable {
 
     public static synchronized void returnConnection(String address, Connection connection){
         if (connection != null){
+            // 返回 address 地址的连接 connection 到连接池中
             pool.returnObject(address, connection);
         }
     }

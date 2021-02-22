@@ -35,8 +35,6 @@ public class Connection {
 
     private long timeout = 10 * 1000;
 
-    private volatile boolean connected = false;
-
     private volatile boolean closed = false;
 
     private EventLoopGroup eventLoopGroup = null;
@@ -105,7 +103,6 @@ public class Connection {
             });
 
             logger.info("ip address:" + this.remoteAddr.toString());
-            connected = true;
         } catch (InterruptedException e) {
             logger.warn(e.getMessage());
         }
@@ -128,7 +125,9 @@ public class Connection {
     }
 
     public boolean isConnected() {
-        return connected;
+        if (isClosed() || !messageChannel.isActive() || !messageChannel.isOpen())
+            return false;
+        return true;
     }
 
     public boolean traceInvoker(String key) {
