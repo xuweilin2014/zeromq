@@ -70,16 +70,20 @@ public class ConsumerHandler extends AbstractHandler<Object> {
 
             if (this.getCause() != null){
                 logger.warn("error occurs and message is " + this.getCause().getMessage());
-                future.setReason(this.getCause());
+                ackMessage.setException(this.getCause());
+                ackMessage.setStatus(SubscribeAckMessage.FAIL);
             // 如果订阅不成功的话，就打印相关信息，并且将异常设置到 future 中，唤醒阻塞的线程
             } else if (ackMessage.getStatus() == SubscribeAckMessage.FAIL){
                 logger.warn(ackMessage.getAck());
-                future.setReason(new Throwable(ackMessage.getAck()));
+                Throwable t = new Throwable(ackMessage.getAck());
+                ackMessage.setException(t);
             // 如果订阅成功的话，打印信息，同样将结果设置到 future 中，唤醒阻塞的线程
             }else {
                 logger.info(ackMessage.getAck());
-                future.setMessageResult(ackMessage.getAck());
+                ackMessage.setStatus(SubscribeAckMessage.SUCCESS);
             }
+
+            future.setMessageResult(ackMessage);
         }
 
     }

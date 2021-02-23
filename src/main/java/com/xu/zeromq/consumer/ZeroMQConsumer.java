@@ -6,6 +6,7 @@ import com.xu.zeromq.core.MessageIdGenerator;
 import com.xu.zeromq.core.MessageSystemConfig;
 import com.xu.zeromq.model.MessageType;
 import com.xu.zeromq.model.RequestMessage;
+import com.xu.zeromq.msg.SubscribeAckMessage;
 import com.xu.zeromq.msg.SubscribeMessage;
 import com.xu.zeromq.msg.UnSubscribeMessage;
 import com.xu.zeromq.netty.MessageProcessor;
@@ -77,13 +78,17 @@ public class ZeroMQConsumer extends MessageProcessor implements ZeroMQAction {
 
         // 异步发送 subscribe 请求给 broker，然后阻塞等待 broker 端的响应
         // 在作者的实现中，似乎发送了 Subscribe 请求之后，broker 返回的 SubscribeAck 响应被无视了，直接等待阻塞超时
-        sendSyncMessage(request);
+        SubscribeAckMessage ack = (SubscribeAckMessage) sendSyncMessage(request);
+        if (ack == null || ack.getStatus() == SubscribeAckMessage.FAIL){
+            logger.warn("consumer [consumerId=" + consumerId + ", topic=" + topic + "] subscribe topic "
+                    + topic + " fail, " + ((ack == null) ? "" : "caused by " + ack.getException().getMessage()));
+        }else {
+            logger.info("consumer [consumerId=" + consumerId + ", topic=" + topic + "] subscribe topic "
+                    + topic + " successfully!");
+        }
     }
 
     public void start() {
-        if (getConnection() == null || !getConnection().isConnected() || getConnection().isClosed()){
-            throw new RuntimeException("connection to " + brokerServerAddress + " is not established yet");
-        }
         // ConsumerHookMessage 用来调用用户自己定义的 hook 对象对消息进行处理，然后返回 ConsumerAckMessage
         super.getConnection().setMessageHandler(new ConsumerHandler(this, new ConsumerHookMessageEvent(hook)));
         Joiner joiner = Joiner.on(MessageSystemConfig.MessageDelimiter).skipNulls();
@@ -95,6 +100,8 @@ public class ZeroMQConsumer extends MessageProcessor implements ZeroMQAction {
         subscribe();
         running = true;
         subscribeMessage = true;
+
+        logger.info("consumer [consumerId=" + consumerId + ", clusterId=" + clusterId + ", topic=" + topic + "] starts successfully! ");
     }
 
     public void shutdown() {
@@ -104,6 +111,8 @@ public class ZeroMQConsumer extends MessageProcessor implements ZeroMQAction {
             // 关闭 consumer 并不真正关闭掉连接，而是将其归还到连接池中
             super.returnConnection();
             running = false;
+
+            logger.info("consumer [" + consumerId + "] is shutdown");
         }
     }
 
