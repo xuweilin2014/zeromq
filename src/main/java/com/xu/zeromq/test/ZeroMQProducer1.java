@@ -9,7 +9,7 @@ import org.apache.commons.lang3.StringUtils;
 public class ZeroMQProducer1 {
 
     public static void main(String[] args) throws InterruptedException {
-        ZeroMQProducer producer = new ZeroMQProducer("127.0.0.1:18888", "AvatarMQ-Topic-1");
+        ZeroMQProducer producer = new ZeroMQProducer("127.0.0.1:18888", "ZeroMQ-Topic-1");
         producer.setClusterId("zeromq cluster");
         producer.start();
 
