@@ -5,8 +5,12 @@ import java.io.Serializable;
 public class ProducerAckMessage extends BaseMessage implements Serializable {
 
     private String ack;
+
     private int status;
+
     private String msgId;
+
+    private Throwable exception;
 
     public String getAck() {
         return ack;
@@ -30,5 +34,13 @@ public class ProducerAckMessage extends BaseMessage implements Serializable {
 
     public void setMsgId(String msgId) {
         this.msgId = msgId;
+    }
+
+    public Throwable getException() {
+        return exception;
+    }
+
+    public void setException(Throwable exception) {
+        this.exception = exception;
     }
 }

@@ -33,7 +33,7 @@ public class MessageConnectionFactory implements KeyedPooledObjectFactory<String
     public boolean validateObject(String key, PooledObject<Connection> p) {
         Connection connection = p.getObject();
         if (connection != null){
-            if (!connection.isClosed()){
+            if (!connection.isClosed() && connection.isConnected()){
                 return true;
             }
         }

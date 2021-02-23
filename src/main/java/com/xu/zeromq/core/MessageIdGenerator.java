@@ -23,10 +23,10 @@ public class MessageIdGenerator {
         String id = "";
         switch (strategy) {
             case StrategyUUID:
-                id = UUID.randomUUID().toString();
+                id = UUID.randomUUID().toString().substring(0, 8);
                 break;
             case StrategyRandomDigital:
-                id = new BigInteger(130, secureRandom).toString(10);
+                id = new BigInteger(130, secureRandom).toString(10).substring(0, 8);
                 break;
         }
         return id;

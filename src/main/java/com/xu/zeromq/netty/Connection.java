@@ -130,15 +130,15 @@ public class Connection {
         return true;
     }
 
-    public boolean traceInvoker(String key) {
-        if (key == null) {
+    public boolean traceFuture(String key) {
+        if (key == null || key.length() == 0) {
             return false;
         }
         return getFutureMap().containsKey(key);
     }
 
     public CallBackFuture<Object> detachInvoker(String key) {
-        if (traceInvoker(key)) {
+        if (traceFuture(key)) {
             return getFutureMap().remove(key);
         } else {
             return null;

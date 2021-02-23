@@ -10,6 +10,8 @@ public class SubscribeAckMessage extends BaseMessage implements Serializable {
 
     private String msgId;
 
+    private Throwable exception;
+
     public String getAck() {
         return ack;
     }
@@ -32,5 +34,13 @@ public class SubscribeAckMessage extends BaseMessage implements Serializable {
 
     public void setMsgId(String msgId) {
         this.msgId = msgId;
+    }
+
+    public Throwable getException() {
+        return exception;
+    }
+
+    public void setException(Throwable exception) {
+        this.exception = exception;
     }
 }

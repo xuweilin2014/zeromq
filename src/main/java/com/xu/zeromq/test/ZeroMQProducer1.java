@@ -11,7 +11,6 @@ public class ZeroMQProducer1 {
     public static void main(String[] args) throws InterruptedException {
         ZeroMQProducer producer = new ZeroMQProducer("127.0.0.1:18888", "AvatarMQ-Topic-1");
         producer.setClusterId("zeromq cluster");
-        producer.init();
         producer.start();
 
         System.out.println(StringUtils.center("zeromq producer1 消息发送开始", 50, "*"));

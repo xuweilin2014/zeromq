@@ -10,7 +10,7 @@ public class CallBackFuture<T> {
 
     private final CountDownLatch countDownLatch = new CountDownLatch(1);
 
-    private T messageResult;
+    private T messageResult = null;
 
     private List<CallBackListener<T>> listeners = Collections.synchronizedList(new ArrayList<CallBackListener<T>>());
 
@@ -46,9 +46,6 @@ public class CallBackFuture<T> {
             countDownLatch.await(timeout, unit);
         } catch (InterruptedException e) {
             throw new RuntimeException();
-        }
-        if (reason != null) {
-            return null;
         }
         return messageResult;
     }

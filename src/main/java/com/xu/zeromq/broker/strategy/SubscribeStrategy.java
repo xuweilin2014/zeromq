@@ -24,7 +24,7 @@ public class SubscribeStrategy implements Strategy {
         // 获取消费者的标识
         String consumerId = subMsg.getConsumerId();
         SubscriptionData subData = new SubscriptionData();
-        subMsg.setTopic(subMsg.getTopic());
+        subData.setTopic(subMsg.getTopic());
 
         // 将 SubscriptionData 保存到 RemoteChannelData 中
         // RemoteChannelData 可以看成是一个 <channel, consumerId, subscriptionData> 三个对象的封装
