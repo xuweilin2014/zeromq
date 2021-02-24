@@ -34,4 +34,5 @@ public class KryoPoolFactory {
     public KryoPool getPool() {
         return pool;
     }
+
 }

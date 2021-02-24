@@ -10,4 +10,5 @@ public interface MessageCodecUtil {
     public void encode(final ByteBuf out, final Object message) throws IOException;
 
     public Object decode(byte[] body) throws IOException;
+
 }

@@ -18,7 +18,7 @@ public class ZeroMQProducer extends MessageProcessor implements ZeroMQAction {
     // 要发送的主题名称
     private String topic;
     // producer 集群默认的名称
-    private String defaultClusterId = "AvatarMQProducerClusters";
+    private String defaultClusterId = "ZeroMQProducerClusters";
     // producer 集群的名称
     private String clusterId = "";
 

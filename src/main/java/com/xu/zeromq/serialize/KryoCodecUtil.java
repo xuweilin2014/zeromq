@@ -15,29 +15,21 @@ public class KryoCodecUtil implements MessageCodecUtil {
     }
 
     public void encode(final ByteBuf out, final Object message) throws IOException {
-        ByteArrayOutputStream byteArrayOutputStream = null;
-        try {
-            byteArrayOutputStream = new ByteArrayOutputStream();
+        try (ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream()) {
             KryoSerialize kryoSerialization = new KryoSerialize(pool);
             kryoSerialization.serialize(byteArrayOutputStream, message);
             byte[] body = byteArrayOutputStream.toByteArray();
             int dataLength = body.length;
             out.writeInt(dataLength);
             out.writeBytes(body);
-        } finally {
-            byteArrayOutputStream.close();
         }
     }
 
     public Object decode(byte[] body) throws IOException {
-        ByteArrayInputStream byteArrayInputStream = null;
-        try {
-            byteArrayInputStream = new ByteArrayInputStream(body);
+        try (ByteArrayInputStream byteArrayInputStream = new ByteArrayInputStream(body)) {
             KryoSerialize kryoSerialization = new KryoSerialize(pool);
             Object obj = kryoSerialization.deserialize(byteArrayInputStream);
             return obj;
-        } finally {
-            byteArrayInputStream.close();
         }
     }
 }

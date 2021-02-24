@@ -36,7 +36,7 @@ public class SendMessageTask implements Callable<Void> {
             if (ConsumerContext.selectByClusterId(task.getClusterId()) != null) {
                 // 根据 cluster_id 获取到对应的消费者集群，并且根据负载均衡策略，选择一个集群中的一个消费者
                 // 也就是一个消费集群如果订阅了某个主题的消息，那么一个相关主题的消息只会被发送到这个集群中的某一个 consumer 中
-                RemoteChannelData channel = ConsumerContext.selectByClusterId(task.getClusterId()).nextRemoteChannelData();
+                RemoteChannelData channel = ConsumerContext.selectByClusterId(task.getClusterId()).nextConsumer();
 
                 ResponseMessage response = new ResponseMessage();
                 response.setMsgType(MessageType.Message);

@@ -21,7 +21,7 @@ public class MessageProcessor {
 
     private Connection connection;
 
-    private String address;
+    protected String address;
 
     public MessageProcessor(String serverAddress) {
         this.address = serverAddress;

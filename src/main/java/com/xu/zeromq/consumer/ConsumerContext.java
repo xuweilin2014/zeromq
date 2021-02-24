@@ -94,20 +94,20 @@ public class ConsumerContext {
         // 如果没有 clusterId 对应的消费者集群
         if (cluster == null) {
             ConsumerCluster newCluster = new ConsumerCluster(clusterId);
-            newCluster.attachRemoteChannelData(channelinfo.getConsumerId(), channelinfo);
+            newCluster.attachConsumer(channelinfo.getConsumerId(), channelinfo);
             relationArray.add(new ClustersRelation(clusterId, newCluster));
         // 如果在消费者集群中找到了 consumerId 对应的消费者
-        } else if (cluster.findRemoteChannelData(channelinfo.getConsumerId()) != null) {
+        } else if (cluster.findConsumer(channelinfo.getConsumerId()) != null) {
             // 删除旧连接，添加新连接
-            cluster.detachRemoteChannelData(channelinfo.getConsumerId());
-            cluster.attachRemoteChannelData(channelinfo.getConsumerId(), channelinfo);
+            cluster.detachConsumer(channelinfo.getConsumerId());
+            cluster.attachConsumer(channelinfo.getConsumerId(), channelinfo);
         // 如果在消费者集群中没有找到 consumerId 对应的消费者
         } else {
             String topic = channelinfo.getSubscript().getTopic();
             // 判断当前消费者集群中是否含有当前这个消费者订阅主题 topic
             boolean contained = cluster.getSubMap().containsKey(topic);
             if (contained) {
-                cluster.attachRemoteChannelData(channelinfo.getConsumerId(), channelinfo);
+                cluster.attachConsumer(channelinfo.getConsumerId(), channelinfo);
             } else {
                 // 一个消费者集群中所有消费者订阅主题应该是一致的，所以当不一致时，应该抛出异常
                 ack.setAck("consumer cluster " + clusterId + " does not contain the topic" + channelinfo.getSubscript().getTopic());
@@ -136,8 +136,8 @@ public class ConsumerContext {
             ConsumerCluster cluster = relationArray.get(i).getCluster();
 
             // 查看 ConsumerClusters 是否包含 client_id 这个消费者，如果包含，则移除
-            if (cluster.findRemoteChannelData(clientId) != null) {
-                cluster.detachRemoteChannelData(clientId);
+            if (cluster.findConsumer(clientId) != null) {
+                cluster.detachConsumer(clientId);
             }
 
             if (cluster.getChannelMap().size() == 0) {

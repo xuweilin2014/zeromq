@@ -3,7 +3,8 @@ package com.xu.zeromq.consumer;
 import com.xu.zeromq.msg.ConsumerAckMessage;
 import com.xu.zeromq.msg.Message;
 
-public interface ProducerMessageHook {
+public interface MessageConsumeHook {
 
-    ConsumerAckMessage hookMessage(Message paramMessage);
+    ConsumerAckMessage consumeMessage(Message paramMessage);
+    
 }

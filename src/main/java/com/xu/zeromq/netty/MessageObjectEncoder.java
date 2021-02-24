@@ -7,7 +7,7 @@ import io.netty.handler.codec.MessageToByteEncoder;
 
 public class MessageObjectEncoder extends MessageToByteEncoder<Object> {
 
-    private MessageCodecUtil util = null;
+    private MessageCodecUtil util;
 
     public MessageObjectEncoder(final MessageCodecUtil util) {
         this.util = util;
@@ -16,4 +16,5 @@ public class MessageObjectEncoder extends MessageToByteEncoder<Object> {
     protected void encode(final ChannelHandlerContext ctx, final Object msg, final ByteBuf out) throws Exception {
         util.encode(out, msg);
     }
+
 }

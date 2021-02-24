@@ -47,9 +47,9 @@ public class ConsumerCluster {
     }
 
     // 添加一个消费者到消费者集群中
-    public void attachRemoteChannelData(String consumerId, RemoteChannelData channelinfo) {
+    public void attachConsumer(String consumerId, RemoteChannelData channelinfo) {
         // 判断在 channelMap 中是否存在此 consumerId 对应的连接信息
-        if (findRemoteChannelData(channelinfo.getConsumerId()) == null) {
+        if (findConsumer(channelinfo.getConsumerId()) == null) {
             // 将 consumerId -> channel 连接信息保存到 channelMap 中
             channelMap.put(consumerId, channelinfo);
             // 将 topic 信息 -> subscription 保存到 subMap 中
@@ -61,7 +61,7 @@ public class ConsumerCluster {
     }
 
     // 从消费者集群中删除一个消费者
-    public void detachRemoteChannelData(final String consumerId) {
+    public void detachConsumer(final String consumerId) {
         channelMap.remove(consumerId);
 
         Predicate predicate = new Predicate() {
@@ -79,13 +79,13 @@ public class ConsumerCluster {
     }
 
     // 根据消费者标识编码，在消费者集群中查找定位一个消费者，如果不存在返回 null
-    public RemoteChannelData findRemoteChannelData(String clientId) {
+    public RemoteChannelData findConsumer(String clientId) {
         return (RemoteChannelData) MapUtils.getObject(channelMap, clientId);
     }
 
     // 负载均衡，根据连接到 broker 的顺序，依次投递消息给消费者。这里的均衡算法直接采用
     // 轮询调度（Round-Robin Scheduling）
-    public RemoteChannelData nextRemoteChannelData() {
+    public RemoteChannelData nextConsumer() {
         Predicate predicate = new Predicate() {
             public boolean evaluate(Object object) {
                 RemoteChannelData data = (RemoteChannelData) object;

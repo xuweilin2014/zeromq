@@ -14,7 +14,7 @@ import com.xu.zeromq.netty.MessageProcessor;
 public class ZeroMQConsumer extends MessageProcessor implements ZeroMQAction {
 
     // 由 consumer 自己定义的消息消费方法
-    private ProducerMessageHook hook;
+    private MessageConsumeHook hook;
 
     private String brokerServerAddress;
 
@@ -25,13 +25,13 @@ public class ZeroMQConsumer extends MessageProcessor implements ZeroMQAction {
     private volatile boolean running = false;
 
     // 默认消费者集群 id
-    private String defaultClusterId = "AvatarMQConsumerClusters";
+    private String defaultClusterId = "ZeroMQConsumerClusters";
 
     private String clusterId = "";
 
     private String consumerId = "";
 
-    public ZeroMQConsumer(String brokerServerAddress, String topic, ProducerMessageHook hook) {
+    public ZeroMQConsumer(String brokerServerAddress, String topic, MessageConsumeHook hook) {
         // 在父类的 MessageProcessor 中，会获取到一个 Connection 对象，用于和 broker 建立连接
         // 每个 consumer 都有一个 Connection 对象作为属性。在 Connection 中，
         // 还有一个 futureMap，用来保存已经发送的 subscribe 请求（还没有收到响应）

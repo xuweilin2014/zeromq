@@ -44,4 +44,5 @@ public class KryoSerialize {
             closer.close();
         }
     }
+
 }

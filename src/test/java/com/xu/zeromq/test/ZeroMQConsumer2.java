@@ -1,14 +1,14 @@
 package com.xu.zeromq.test;
 
 import com.xu.zeromq.consumer.ZeroMQConsumer;
-import com.xu.zeromq.consumer.ProducerMessageHook;
+import com.xu.zeromq.consumer.MessageConsumeHook;
 import com.xu.zeromq.msg.ConsumerAckMessage;
 import com.xu.zeromq.msg.Message;
 
 public class ZeroMQConsumer2 {
 
-    private static ProducerMessageHook hook = new ProducerMessageHook() {
-        public ConsumerAckMessage hookMessage(Message message) {
+    private static MessageConsumeHook hook = new MessageConsumeHook() {
+        public ConsumerAckMessage consumeMessage(Message message) {
             System.out.printf("ZeroMQConsumer2 收到消息编号:%s,消息内容:%s\n", message.getMsgId(), new String(message.getBody()));
             ConsumerAckMessage result = new ConsumerAckMessage();
             result.setStatus(ConsumerAckMessage.SUCCESS);
