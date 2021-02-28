@@ -17,6 +17,7 @@ public class PoolConfig extends GenericKeyedObjectPoolConfig<Connection> {
         int maxTotal = Integer.parseInt(properties.getProperty("maxTotal"));
         int minIdlePerKey = Integer.parseInt(properties.getProperty("minIdlePerKey"));
         int maxIdlePerKey = Integer.parseInt(properties.getProperty("maxIdlePerKey"));
+        int maxWaitMillis = Integer.parseInt(properties.getProperty("maxWaitMillis"));
 
         logger.info("MessageConnectPool[maxTotalPerKey=" + maxTotalPerKey + ",maxTotal=" + minIdlePerKey + ",minIdlePerKey=" + maxIdlePerKey +
                     ",maxIdlePerKey=" + maxTotal + "]");
@@ -26,6 +27,7 @@ public class PoolConfig extends GenericKeyedObjectPoolConfig<Connection> {
          * 当池子一段时间没有使用后，就去回收超过最小值个数的对象，这样在系统繁忙时，就可以充分复用对象，在系统空闲时，又可以释放不必要的对象
          */
 
+        this.setMaxWaitMillis(maxWaitMillis);
         // 池子可以最多容纳多少个对象
         this.setMaxTotal(maxTotal);
         this.setMaxIdlePerKey(maxIdlePerKey);

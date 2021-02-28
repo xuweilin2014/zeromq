@@ -26,4 +26,5 @@ public class TransferAckController implements Callable<Void> {
     public boolean isStopped() {
         return stopped;
     }
+
 }

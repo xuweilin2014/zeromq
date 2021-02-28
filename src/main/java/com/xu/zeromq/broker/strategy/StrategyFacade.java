@@ -5,6 +5,8 @@ import com.xu.zeromq.model.ResponseMessage;
 import io.netty.channel.ChannelHandlerContext;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
+
 import org.apache.commons.collections.map.TypedMap;
 
 public class StrategyFacade {
@@ -19,7 +21,7 @@ public class StrategyFacade {
     private ChannelHandlerContext channelHandler;
     private Strategy strategy;
 
-    private static Map strategyMap = TypedMap.decorate(new HashMap(), Integer.class, Strategy.class);
+    private static Map<Integer, Strategy> strategyMap = new ConcurrentHashMap<>();
 
     static {
         strategyMap.put(AvatarMQProducerMessageStrategy, new ProducerStrategy());
@@ -38,19 +40,19 @@ public class StrategyFacade {
         switch (request.getMsgType()) {
             // producer 发送到 broker 端的消息
             case Message:
-                strategy = (Strategy) strategyMap.get(AvatarMQProducerMessageStrategy);
+                strategy = strategyMap.get(AvatarMQProducerMessageStrategy);
                 break;
             // consumer 接收到 producer 发送的消息之后，返回的确认 ack 消息
             case ConsumerAck:
-                strategy = (Strategy) strategyMap.get(AvatarMQConsumerMessageStrategy);
+                strategy = strategyMap.get(AvatarMQConsumerMessageStrategy);
                 break;
             // 消费者订阅某主题的消息
             case Subscribe:
-                strategy = (Strategy) strategyMap.get(AvatarMQSubscribeStrategy);
+                strategy = strategyMap.get(AvatarMQSubscribeStrategy);
                 break;
             // 消费者取消订阅某主题的消息
             case Unsubscribe:
-                strategy = (Strategy) strategyMap.get(AvatarMQUnsubscribeStrategy);
+                strategy = strategyMap.get(AvatarMQUnsubscribeStrategy);
                 break;
             default:
                 break;

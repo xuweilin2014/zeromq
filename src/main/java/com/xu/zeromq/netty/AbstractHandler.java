@@ -6,13 +6,23 @@ import io.netty.channel.ChannelInboundHandlerAdapter;
 import org.springframework.aop.framework.ProxyFactory;
 import org.springframework.aop.support.NameMatchMethodPointcutAdvisor;
 
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+
 public abstract class AbstractHandler<T> extends ChannelInboundHandlerAdapter implements MessageEventHandler, MessageEventProxy {
 
     final public static String proxyMappedName = "handleMessage";
+
+    protected static ExecutorService executor = Executors.newCachedThreadPool();
+
     protected MessageProcessor processor;
+
     protected Throwable cause;
+
     protected HookMessageEvent<T> hook;
+
     protected Connection connection;
+
     private AbstractHandler<T> wrapper;
 
     public AbstractHandler() {

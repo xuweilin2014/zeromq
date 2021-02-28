@@ -8,11 +8,16 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.ConcurrentHashMap;
+
 import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.collections.MapUtils;
 import org.apache.commons.collections.Predicate;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class ConsumerCluster {
+
+    public static final Logger logger = LoggerFactory.getLogger(ConsumerCluster.class);
 
     // 轮询调度（Round-Robin Scheduling）位置标记
     private int next = 0;
@@ -47,16 +52,16 @@ public class ConsumerCluster {
     }
 
     // 添加一个消费者到消费者集群中
-    public void attachConsumer(String consumerId, RemoteChannelData channelinfo) {
+    public void attachConsumer(String consumerId, RemoteChannelData channel) {
         // 判断在 channelMap 中是否存在此 consumerId 对应的连接信息
-        if (findConsumer(channelinfo.getConsumerId()) == null) {
+        if (findConsumer(channel.getConsumerId()) == null) {
             // 将 consumerId -> channel 连接信息保存到 channelMap 中
-            channelMap.put(consumerId, channelinfo);
+            channelMap.put(consumerId, channel);
             // 将 topic 信息 -> subscription 保存到 subMap 中
-            subMap.put(channelinfo.getSubscript().getTopic(), channelinfo.getSubscript());
-            channelList.add(channelinfo);
+            subMap.put(channel.getSubscript().getTopic(), channel.getSubscript());
+            channelList.add(channel);
         } else {
-            System.out.println("consumer clusters exists! it's clientId:" + consumerId);
+            logger.warn("consumer clusters exists! it's clientId:" + consumerId);
         }
     }
 
@@ -79,8 +84,8 @@ public class ConsumerCluster {
     }
 
     // 根据消费者标识编码，在消费者集群中查找定位一个消费者，如果不存在返回 null
-    public RemoteChannelData findConsumer(String clientId) {
-        return (RemoteChannelData) MapUtils.getObject(channelMap, clientId);
+    public RemoteChannelData findConsumer(String consumerId) {
+        return (RemoteChannelData) MapUtils.getObject(channelMap, consumerId);
     }
 
     // 负载均衡，根据连接到 broker 的顺序，依次投递消息给消费者。这里的均衡算法直接采用

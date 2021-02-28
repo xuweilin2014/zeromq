@@ -22,7 +22,7 @@ public class ZeroMQServer extends ZeroMQBrokerServer implements ApplicationConte
         logger.info("ZeroMQ Server Starts Successfully!");
     }
 
-    public void afterPropertiesSet() throws Exception {
+    public void afterPropertiesSet() {
         init();
         start();
     }
